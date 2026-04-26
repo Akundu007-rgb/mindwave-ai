@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Features{% endblock %}
+{% block content %}
+<div class="features-page">
+  <div class="page-hero-inner">
+    <div class="section-label">Platform Features</div>
+    <h1>Real AI. Real insights. Real impact.</h1>
+    <p>Every feature in MindWave is backed by trained NLP models and evidence-based mental health science.</p>
+  </div>
+
+  <div class="features-grid-page">
+    <div class="fg-category">
+      <h2>🧠 NLP Engine</h2>
+      <div class="fg-cards">
+        <div class="fg-card"><div class="fg-icon">💬</div><h3>Emotion Classification</h3><p>TF-IDF + Logistic Regression trained on mental health corpora detects 7 emotions from free text.</p><span class="feat-tag">Model 1</span></div>
+        <div class="fg-card"><div class="fg-icon">📊</div><h3>Sentiment Analysis</h3><p>Classifies text polarity (positive, neutral, negative) with probability distribution scores.</p><span class="feat-tag">Model 2</span></div>
+        <div class="fg-card"><div class="fg-icon">🚨</div><h3>Risk Prediction</h3><p>Predicts distress risk level (low/medium/high) from linguistic cues — triggers escalation protocol.</p><span class="feat-tag">Model 3</span></div>
+        <div class="fg-card"><div class="fg-icon">📈</div><h3>Wellness Scoring</h3><p>Composite score (0-100) computed from sentiment, risk, and emotion to track progress over time.</p><span class="feat-tag">Analytics</span></div>
+      </div>
+    </div>
+    <div class="fg-category">
+      <h2>👤 Personal Dashboard</h2>
+      <div class="fg-cards">
+        <div class="fg-card"><div class="fg-icon">📉</div><h3>Wellness Trend Charts</h3><p>Visual timeline of your NLP-analyzed wellness scores across journal entries.</p></div>
+        <div class="fg-card"><div class="fg-icon">🍩</div><h3>Emotion Distribution</h3><p>Donut chart showing your emotional profile across all entries — patterns made visible.</p></div>
+        <div class="fg-card"><div class="fg-icon">🔥</div><h3>Activity Streaks</h3><p>Tracks daily consistency in journaling and check-ins to build healthy habits.</p></div>
+        <div class="fg-card"><div class="fg-icon">📋</div><h3>Check-in Tracking</h3><p>Log mood, sleep, and stress scores daily. Charts show correlations with journal sentiment.</p></div>
+      </div>
+    </div>
+    <div class="fg-category">
+      <h2>🔒 Privacy & Security</h2>
+      <div class="fg-cards">
+        <div class="fg-card"><div class="fg-icon">🗄️</div><h3>Local SQLite Storage</h3><p>All your data is stored locally on the server — no third-party data sharing.</p></div>
+        <div class="fg-card"><div class="fg-icon">🔐</div><h3>Hashed Passwords</h3><p>SHA-256 password hashing ensures credentials are never stored in plaintext.</p></div>
+        <div class="fg-card"><div class="fg-icon">👤</div><h3>Per-User Isolation</h3><p>Every user's data is completely isolated — you only see your own entries and scores.</p></div>
+        <div class="fg-card"><div class="fg-icon">⚠️</div><h3>Crisis Escalation</h3><p>High-risk entries surface crisis resources and professional helpline numbers immediately.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

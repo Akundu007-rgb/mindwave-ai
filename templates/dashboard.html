@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+
+  <!-- DASH HEADER -->
+  <div class="dash-header">
+    <div>
+      <div class="section-label">Personal Dashboard</div>
+      <h1 class="dash-title">Hello, {{ user['username'] }} 👋</h1>
+      <p class="dash-sub">Your mental wellness snapshot — powered by your real journal data.</p>
+    </div>
+    <div class="dash-actions">
+      <a href="{{ url_for('journal') }}" class="btn-primary">+ New Journal Entry</a>
+      <a href="{{ url_for('checkin') }}" class="btn-ghost-sm">Daily Check-in</a>
+    </div>
+  </div>
+
+  {% if journal_count == 0 %}
+  <!-- EMPTY STATE -->
+  <div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h2>No entries yet</h2>
+    <p>Write your first journal entry to see your personalized AI analysis and dashboard come alive.</p>
+    <a href="{{ url_for('journal') }}" class="btn-primary">Write First Entry →</a>
+  </div>
+  {% else %}
+
+  <!-- STATS ROW -->
+  <div class="dash-stats-row">
+    <div class="stat-card" id="statWellness">
+      <div class="sc-label">Avg Wellness Score</div>
+      <div class="sc-num gradient-text" id="wellnessNum">{{ avg_wellness }}</div>
+      <div class="sc-sub">/ 100</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">Journal Entries</div>
+      <div class="sc-num gradient-text">{{ journal_count }}</div>
+      <div class="sc-sub">total entries</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">Active Streak</div>
+      <div class="sc-num gradient-text">{{ streak }}</div>
+      <div class="sc-sub">days in a row 🔥</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">Latest Wellness</div>
+      <div class="sc-num gradient-text">{{ latest_wellness }}</div>
+      <div class="sc-sub">/ 100 today</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="dash-charts">
+
+    <!-- WELLNESS TREND CHART -->
+    <div class="chart-card wide">
+      <div class="chart-header">
+        <h3>Wellness Score Trend</h3>
+        <span class="chart-meta">From your journal entries</span>
+      </div>
+      <canvas id="wellnessChart" height="80"></canvas>
+    </div>
+
+    <!-- EMOTION PIE -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Emotion Distribution</h3>
+        <span class="chart-meta">All-time breakdown</span>
+      </div>
+      <canvas id="emotionChart" height="180"></canvas>
+    </div>
+
+  </div>
+
+  <!-- CHECKIN CHART -->
+  <div class="dash-charts">
+    <div class="chart-card wide">
+      <div class="chart-header">
+        <h3>Daily Check-in Trends</h3>
+        <span class="chart-meta">Mood, Sleep & Stress from check-ins</span>
+      </div>
+      <canvas id="checkinChart" height="80"></canvas>
+    </div>
+
+    <!-- RECENT JOURNALS -->
+    <div class="chart-card journal-preview-card">
+      <div class="chart-header">
+        <h3>Recent Journal Entries</h3>
+        <a href="{{ url_for('history') }}" class="chart-link">View all →</a>
+      </div>
+      <div class="journal-preview-list">
+        {% for j in journals[:5] %}
+        <div class="jp-item">
+          <div class="jp-meta">
+            <span class="jp-emotion emotion-{{ j['emotion'] }}">{{ j['emotion'] or 'unknown' }}</span>
+            <span class="jp-risk risk-{{ j['risk_level'] }}">{{ j['risk_level'] or '—' }}</span>
+            <span class="jp-date">{{ j['created'][:10] }}</span>
+          </div>
+          <p class="jp-text">{{ j['text'][:120] }}{% if j['text']|length > 120 %}...{% endif %}</p>
+          <div class="jp-score">Wellness: <strong>{{ j['wellness_score'] }}</strong>/100</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+const emotionCounts = {{ emotion_counts|safe }};
+
+// Fetch dynamic data and render charts
+async function loadCharts() {
+  const res  = await fetch('/api/dashboard_data');
+  const data = await res.json();
+
+  // ── WELLNESS TREND ─────────────────────────────────
+  const wCtx = document.getElementById('wellnessChart').getContext('2d');
+  new Chart(wCtx, {
+    type: 'line',
+    data: {
+      labels: data.mood_trend.map(d => d.date),
+      datasets: [{
+        label: 'Wellness Score',
+        data: data.mood_trend.map(d => d.score),
+        borderColor: '#4f9eff',
+        backgroundColor: 'rgba(79,158,255,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#4f9eff',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8fadc9' } },
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8fadc9' } }
+      }
+    }
+  });
+
+  // ── EMOTION PIE ────────────────────────────────────
+  const emotionColors = {
+    anxiety: '#4f9eff', depression: '#7c5cfc', stress: '#ffc94d',
+    hopeful: '#00e5a0', calm: '#5af0c0', anger: '#ff6b6b', loneliness: '#c084fc'
+  };
+  const labels = Object.keys(emotionCounts);
+  const values = Object.values(emotionCounts);
+  const colors = labels.map(l => emotionColors[l] || '#8fadc9');
+
+  const eCtx = document.getElementById('emotionChart').getContext('2d');
+  new Chart(eCtx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8fadc9', font: { size: 11 }, padding: 12 } }
+      }
+    }
+  });
+
+  // ── CHECKIN CHART ──────────────────────────────────
+  if (data.checkin_trend.length > 0) {
+    const cCtx = document.getElementById('checkinChart').getContext('2d');
+    new Chart(cCtx, {
+      type: 'bar',
+      data: {
+        labels: data.checkin_trend.map(d => d.date),
+        datasets: [
+          { label: 'Mood', data: data.checkin_trend.map(d => d.mood), backgroundColor: 'rgba(79,158,255,0.6)', borderRadius: 4 },
+          { label: 'Sleep (hrs)', data: data.checkin_trend.map(d => d.sleep), backgroundColor: 'rgba(0,229,160,0.5)', borderRadius: 4 },
+          { label: 'Stress', data: data.checkin_trend.map(d => d.stress), backgroundColor: 'rgba(255,107,107,0.5)', borderRadius: 4 },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#8fadc9', font: { size: 11 } } } },
+        scales: {
+          y: { min: 0, max: 10, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8fadc9' } },
+          x: { grid: { display: false }, ticks: { color: '#8fadc9' } }
+        }
+      }
+    });
+  } else {
+    const c = document.getElementById('checkinChart');
+    if (c) c.closest('.chart-card').innerHTML += '<p class="no-data-msg">No check-ins yet. <a href="/checkin">Add one →</a></p>';
+  }
+}
+
+{% if journal_count > 0 %}
+loadCharts();
+{% endif %}
+</script>
+{% endblock %}

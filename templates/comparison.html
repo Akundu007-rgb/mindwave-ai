@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Compare AI Mental Health Apps{% endblock %}
+{% block content %}
+<div class="compare-page">
+
+  <div class="page-hero-inner">
+    <div class="section-label">Market Comparison</div>
+    <h1>MindWave vs The Competition</h1>
+    <p>How does our NLP-powered, open-source approach stack up against the biggest names in AI mental health? Spoiler: we win where it matters most.</p>
+  </div>
+
+  <!-- FEATURE COMPARISON TABLE -->
+  <div class="compare-section">
+    <h2>Feature-by-Feature Comparison</h2>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th class="feature-col">Feature</th>
+            <th class="us-col">🧠 MindWave</th>
+            <th>Wysa</th>
+            <th>Woebot</th>
+            <th>BetterHelp AI</th>
+            <th>Calm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feat-name">NLP Emotion Detection</td>
+            <td class="us-cell"><span class="check">✓</span> 7 emotions</td>
+            <td><span class="check">✓</span> Limited</td>
+            <td><span class="check">✓</span> Basic</td>
+            <td><span class="cross">✗</span> None</td>
+            <td><span class="cross">✗</span> None</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Risk Level Prediction</td>
+            <td class="us-cell"><span class="check">✓</span> 3-level AI</td>
+            <td><span class="check">✓</span> Partial</td>
+            <td><span class="check">✓</span> Partial</td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feat-name">Clinical Assessment (PHQ/GAD)</td>
+            <td class="us-cell"><span class="check">✓</span> Built-in</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="partial">~</span> Manual</td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feat-name">Personalised Dashboard</td>
+            <td class="us-cell"><span class="check">✓</span> Real-time charts</td>
+            <td><span class="partial">~</span> Basic</td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="partial">~</span> Therapist view</td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feat-name">Open Model Training</td>
+            <td class="us-cell"><span class="check">✓</span> Fully transparent</td>
+            <td><span class="cross">✗</span> Black box</td>
+            <td><span class="cross">✗</span> Black box</td>
+            <td><span class="cross">✗</span> Black box</td>
+            <td><span class="cross">✗</span> Black box</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Free Tier</td>
+            <td class="us-cell"><span class="check">✓</span> Core features free</td>
+            <td><span class="partial">~</span> Very limited</td>
+            <td><span class="check">✓</span> Free</td>
+            <td><span class="cross">✗</span> Paid only</td>
+            <td><span class="partial">~</span> Freemium</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Daily Journal + NLP</td>
+            <td class="us-cell"><span class="check">✓</span> Full pipeline</td>
+            <td><span class="partial">~</span></td>
+            <td><span class="partial">~</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feat-name">Crisis Escalation Protocol</td>
+            <td class="us-cell"><span class="check">✓</span> Automatic</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="check">✓</span> Via therapist</td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feat-name">India-specific Support</td>
+            <td class="us-cell"><span class="check">✓</span> iCall, Vandrevala</td>
+            <td><span class="partial">~</span> Limited</td>
+            <td><span class="cross">✗</span> US-focused</td>
+            <td><span class="cross">✗</span> US-focused</td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feat-name">Run Locally / Privacy-first</td>
+            <td class="us-cell"><span class="check">✓</span> Self-hostable</td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SCORE CARDS -->
+  <div class="compare-section">
+    <h2>Overall Ratings</h2>
+    <div class="rating-grid">
+      {% set apps = [
+        ("🧠 MindWave", "us", 92, 95, 90, 88, "Our platform"),
+        ("Wysa", "", 78, 60, 55, 72, "AI chatbot, UK-based"),
+        ("Woebot", "", 75, 65, 70, 68, "CBT chatbot, Stanford-backed"),
+        ("BetterHelp AI", "", 55, 80, 30, 60, "Therapist matching, expensive"),
+        ("Calm", "", 40, 82, 20, 55, "Meditation app, not clinical"),
+      ] %}
+      {% for name, cls, ai, ux, privacy, value, note in apps %}
+      <div class="rating-card {% if cls == 'us' %}rating-us{% endif %}">
+        {% if cls == 'us' %}<div class="us-badge">Our Platform</div>{% endif %}
+        <div class="rating-name">{{ name }}</div>
+        <div class="rating-note">{{ note }}</div>
+        <div class="rating-bars">
+          <div class="rb-row"><span>AI Power</span>
+            <div class="rb-track"><div class="rb-fill {% if cls == 'us' %}rb-us{% endif %}" style="width:{{ ai }}%"></div></div>
+            <span>{{ ai }}</span></div>
+          <div class="rb-row"><span>UX Design</span>
+            <div class="rb-track"><div class="rb-fill {% if cls == 'us' %}rb-us{% endif %}" style="width:{{ ux }}%"></div></div>
+            <span>{{ ux }}</span></div>
+          <div class="rb-row"><span>Privacy</span>
+            <div class="rb-track"><div class="rb-fill {% if cls == 'us' %}rb-us{% endif %}" style="width:{{ privacy }}%"></div></div>
+            <span>{{ privacy }}</span></div>
+          <div class="rb-row"><span>Value</span>
+            <div class="rb-track"><div class="rb-fill {% if cls == 'us' %}rb-us{% endif %}" style="width:{{ value }}%"></div></div>
+            <span>{{ value }}</span></div>
+        </div>
+        <div class="overall-score {% if cls == 'us' %}score-us{% endif %}">
+          Overall: {{ ((ai + ux + privacy + value) / 4)|int }}/100
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- WHY MINDWAVE WINS -->
+  <div class="compare-section">
+    <h2>Why MindWave Wins</h2>
+    <div class="why-win-grid">
+      <div class="ww-card">
+        <div class="ww-icon">🔬</div>
+        <h3>Real Trained AI</h3>
+        <p>Unlike most apps that use rule-based chatbots, MindWave trains actual scikit-learn NLP classifiers on real mental health text data. The model weights are visible and explainable.</p>
+        <div class="ww-vs">Others use: rule-based scripts or GPT APIs</div>
+      </div>
+      <div class="ww-card">
+        <div class="ww-icon">🔒</div>
+        <h3>Transparent Privacy</h3>
+        <p>Your data stays in your own SQLite database. No cloud sync to unknown servers. No selling of mental health data. You can delete everything with one click.</p>
+        <div class="ww-vs">Others: data sent to US servers, GDPR concerns</div>
+      </div>
+      <div class="ww-card">
+        <div class="ww-icon">🇮🇳</div>
+        <h3>Built for India</h3>
+        <p>Crisis resources point to iCall and Vandrevala Foundation. Built with Indian healthcare realities in mind — low cost, accessible, works on basic devices.</p>
+        <div class="ww-vs">Others: US/UK-centric with no India crisis support</div>
+      </div>
+      <div class="ww-card">
+        <div class="ww-icon">📊</div>
+        <h3>Full Data Pipeline</h3>
+        <p>Journal → NLP analysis → database → dynamic charts → trend detection. A complete data science pipeline that most consumer apps don't expose at all.</p>
+        <div class="ww-vs">Others: black-box AI with no user-visible analysis</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-orb"></div>
+    <div class="cta-content">
+      {% if user %}
+      <h2>Ready to see your own data?</h2>
+      <p>Take the 7-question assessment and see MindWave's AI in action.</p>
+      <a href="{{ url_for('assessment') }}" class="btn-primary btn-large">Take Assessment →</a>
+      {% else %}
+      <h2>Try MindWave for free today</h2>
+      <p>No credit card. No ads. Real AI. Built for you.</p>
+      <a href="{{ url_for('register') }}" class="btn-primary btn-large">Create Free Account →</a>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

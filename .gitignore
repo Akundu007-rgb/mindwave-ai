@@ -1,0 +1,44 @@
+# === DATABASE — never upload user data ===
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# === TRAINED MODELS — large binary files ===
+# (keep train_model.py so others can retrain)
+model/*.pkl
+model/model_meta.json
+
+# === PYTHON ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# === VIRTUAL ENVIRONMENT ===
+venv/
+env/
+.venv/
+ENV/
+
+# === IDE / EDITOR ===
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# === FLASK SECRET / ENV ===
+.env
+.flaskenv
+config.py
+
+# === LOGS ===
+*.log
+logs/
+
+# === OS JUNK ===
+desktop.ini
+.Spotlight-V100

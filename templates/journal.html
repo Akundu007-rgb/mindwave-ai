@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Journal{% endblock %}
+{% block content %}
+<div class="journal-page">
+
+  <div class="page-hero-inner">
+    <div class="section-label">AI Journal</div>
+    <h1>Write. Reflect. Understand.</h1>
+    <p>Your words are analyzed by our trained NLP model — emotion, sentiment, and risk are detected automatically.</p>
+  </div>
+
+  <div class="journal-layout">
+
+    <!-- WRITE SECTION -->
+    <div class="journal-write">
+      <form method="POST" class="journal-form">
+        {% if error %}
+        <div class="auth-error">⚠ {{ error }}</div>
+        {% endif %}
+
+        <label class="journal-label">How are you feeling today?</label>
+        <textarea name="text" id="journalText" class="journal-textarea"
+          placeholder="Write freely... describe your thoughts, feelings, what happened today, worries, hopes — anything at all. Our AI will analyze it."
+          rows="10" minlength="10" required></textarea>
+
+        <div class="journal-meta-row">
+          <span id="charCount" class="char-count">0 characters</span>
+          <button type="submit" class="btn-primary" id="analyzeBtn">Analyze with AI →</button>
+        </div>
+      </form>
+
+      <!-- ANALYSIS RESULT -->
+      {% if result %}
+      <div class="analysis-result">
+        <div class="ar-header">
+          <span class="section-label">NLP Analysis Result</span>
+          <div class="ar-badges">
+            <span class="badge-emotion emotion-{{ result.emotion }}">{{ result.emotion }}</span>
+            <span class="badge-sentiment sentiment-{{ result.sentiment }}">{{ result.sentiment }}</span>
+            <span class="badge-risk risk-{{ result.risk_level }}">{{ result.risk_level }} risk</span>
+          </div>
+        </div>
+
+        <div class="ar-scores">
+          <div class="ar-score-item">
+            <span class="ars-label">Wellness Score</span>
+            <div class="ars-bar">
+              <div class="ars-fill" style="width:{{ result.wellness_score }}%"></div>
+            </div>
+            <span class="ars-num">{{ result.wellness_score }}/100</span>
+          </div>
+        </div>
+
+        <div class="ar-emotion-dist">
+          <h4>Emotion Probabilities</h4>
+          <div class="emotion-dist-grid">
+            {% for emotion, prob in result.emotion_distribution.items() %}
+            <div class="ed-item">
+              <span class="ed-name">{{ emotion }}</span>
+              <div class="ed-bar">
+                <div class="ed-fill emotion-fill-{{ emotion }}" style="width:{{ prob }}%"></div>
+              </div>
+              <span class="ed-pct">{{ prob }}%</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="ar-confidence">
+          <span>Emotion confidence: <strong>{{ result.confidence.emotion }}%</strong></span>
+          <span>Sentiment confidence: <strong>{{ result.confidence.sentiment }}%</strong></span>
+          <span>Risk confidence: <strong>{{ result.confidence.risk }}%</strong></span>
+        </div>
+
+        <div class="ar-recs">
+          <h4>💡 Personalized Recommendations</h4>
+          <ul>
+            {% for rec in result.recommendations %}
+            <li>{{ rec }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        {% if result.risk_level == 'high' %}
+        <div class="crisis-alert">
+          <strong>⚠ High Risk Detected</strong>
+          <p>Based on your entry, we recommend reaching out to a professional. If you are in crisis, please contact iCall: <strong>9152987821</strong> (India) or your local emergency services immediately.</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- RECENT ENTRIES SIDEBAR -->
+    <div class="journal-sidebar">
+      <h3>Recent Entries</h3>
+      {% if recent %}
+        {% for j in recent %}
+        <div class="sidebar-entry">
+          <div class="se-top">
+            <span class="badge-emotion emotion-{{ j['emotion'] }}">{{ j['emotion'] or '?' }}</span>
+            <span class="se-date">{{ j['created'][:10] }}</span>
+          </div>
+          <p class="se-text">{{ j['text'][:100] }}{% if j['text']|length > 100 %}...{% endif %}</p>
+          <div class="se-score">
+            <div class="se-bar">
+              <div style="width:{{ j['wellness_score'] }}%;height:100%;background:var(--accent);border-radius:2px;"></div>
+            </div>
+            <span>{{ j['wellness_score'] }}/100</span>
+          </div>
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('history') }}" class="view-all-link">View all entries →</a>
+      {% else %}
+        <p class="no-entries">Your journal entries will appear here after you write them.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+const ta = document.getElementById('journalText');
+const cc = document.getElementById('charCount');
+ta.addEventListener('input', () => {
+  cc.textContent = ta.value.length + ' characters';
+});
+</script>
+{% endblock %}

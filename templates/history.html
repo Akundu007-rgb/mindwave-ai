@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<div class="history-page">
+  <div class="page-hero-inner">
+    <div class="section-label">Your History</div>
+    <h1>All Journal Entries & Check-ins</h1>
+    <p>A complete record of your mental wellness journey, powered by NLP analysis.</p>
+  </div>
+
+  <div class="history-tabs">
+    <button class="tab-btn active" onclick="switchTab('journals')">📓 Journal Entries ({{ journals|length }})</button>
+    <button class="tab-btn" onclick="switchTab('checkins')">📊 Check-ins ({{ checkins|length }})</button>
+  </div>
+
+  <!-- JOURNALS TAB -->
+  <div class="tab-content" id="tab-journals">
+    {% if journals %}
+      <div class="history-list">
+        {% for j in journals %}
+        <div class="history-item">
+          <div class="hi-header">
+            <div class="hi-badges">
+              <span class="badge-emotion emotion-{{ j['emotion'] }}">{{ j['emotion'] or 'unknown' }}</span>
+              <span class="badge-sentiment sentiment-{{ j['sentiment'] }}">{{ j['sentiment'] or '—' }}</span>
+              <span class="badge-risk risk-{{ j['risk_level'] }}">{{ j['risk_level'] or '—' }} risk</span>
+            </div>
+            <div class="hi-right">
+              <span class="hi-score">{{ j['wellness_score'] }}/100</span>
+              <span class="hi-date">{{ j['created'][:16].replace('T',' ') }}</span>
+            </div>
+          </div>
+          <p class="hi-text">{{ j['text'] }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📓</div>
+        <h2>No journal entries yet</h2>
+        <a href="{{ url_for('journal') }}" class="btn-primary">Write First Entry →</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- CHECKINS TAB -->
+  <div class="tab-content" id="tab-checkins" style="display:none">
+    {% if checkins %}
+      <div class="history-list">
+        {% for c in checkins %}
+        <div class="history-item">
+          <div class="hi-header">
+            <div class="hi-badges">
+              <span class="badge-risk" style="background:rgba(79,158,255,0.1);color:var(--accent);border-color:rgba(79,158,255,0.2)">Mood: {{ c['mood_score'] }}/10</span>
+              <span class="badge-risk" style="background:rgba(0,229,160,0.1);color:var(--accent3);border-color:rgba(0,229,160,0.2)">Sleep: {{ c['sleep_hours'] }}h</span>
+              <span class="badge-risk" style="background:rgba(255,107,107,0.1);color:var(--danger);border-color:rgba(255,107,107,0.2)">Stress: {{ c['stress_level'] }}/10</span>
+            </div>
+            <span class="hi-date">{{ c['created'][:16].replace('T',' ') }}</span>
+          </div>
+          {% if c['notes'] %}<p class="hi-text">{{ c['notes'] }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <h2>No check-ins yet</h2>
+        <a href="{{ url_for('checkin') }}" class="btn-primary">Add Check-in →</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  event.target.classList.add('active');
+}
+</script>
+{% endblock %}

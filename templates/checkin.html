@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Daily Check-in{% endblock %}
+{% block content %}
+<div class="checkin-page">
+  <div class="page-hero-inner">
+    <div class="section-label">Daily Check-in</div>
+    <h1>How are you doing today?</h1>
+    <p>Track your mood, sleep, and stress levels. This data powers your dashboard charts and trend analysis.</p>
+  </div>
+
+  <div class="checkin-layout">
+    <div class="checkin-form-card">
+      {% if saved %}
+      <div class="success-banner">✅ Check-in saved! View your <a href="{{ url_for('dashboard') }}">dashboard</a> to see updates.</div>
+      {% endif %}
+
+      <form method="POST" class="checkin-form">
+        <div class="slider-group">
+          <label>Mood today <span id="moodVal" class="slider-val">5</span>/10</label>
+          <input type="range" name="mood_score" min="1" max="10" value="5" id="moodSlider"
+            oninput="document.getElementById('moodVal').textContent=this.value" class="slider"/>
+          <div class="slider-labels"><span>😞 Very bad</span><span>😊 Great</span></div>
+        </div>
+
+        <div class="slider-group">
+          <label>Hours of sleep last night <span id="sleepVal" class="slider-val">7</span>h</label>
+          <input type="range" name="sleep_hours" min="0" max="12" step="0.5" value="7" id="sleepSlider"
+            oninput="document.getElementById('sleepVal').textContent=this.value" class="slider"/>
+          <div class="slider-labels"><span>0h</span><span>12h</span></div>
+        </div>
+
+        <div class="slider-group">
+          <label>Stress level <span id="stressVal" class="slider-val">5</span>/10</label>
+          <input type="range" name="stress_level" min="1" max="10" value="5" id="stressSlider"
+            oninput="document.getElementById('stressVal').textContent=this.value" class="slider"/>
+          <div class="slider-labels"><span>😌 Very calm</span><span>😤 Very stressed</span></div>
+        </div>
+
+        <div class="form-group">
+          <label>Optional notes</label>
+          <textarea name="notes" placeholder="Anything else about today?" rows="3" class="journal-textarea" style="height:auto"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary btn-full">Save Check-in →</button>
+      </form>
+    </div>
+
+    <div class="checkin-history-card">
+      <h3>Recent Check-ins</h3>
+      {% if recent %}
+        {% for c in recent %}
+        <div class="ci-item">
+          <div class="ci-top">
+            <span class="ci-date">{{ c['created'][:10] }}</span>
+          </div>
+          <div class="ci-bars">
+            <div class="ci-bar-item">
+              <span>Mood</span>
+              <div class="ci-track"><div class="ci-fill" style="width:{{ c['mood_score'] * 10 }}%;background:var(--accent)"></div></div>
+              <strong>{{ c['mood_score'] }}/10</strong>
+            </div>
+            <div class="ci-bar-item">
+              <span>Sleep</span>
+              <div class="ci-track"><div class="ci-fill" style="width:{{ (c['sleep_hours'] / 12 * 100)|int }}%;background:var(--accent3)"></div></div>
+              <strong>{{ c['sleep_hours'] }}h</strong>
+            </div>
+            <div class="ci-bar-item">
+              <span>Stress</span>
+              <div class="ci-track"><div class="ci-fill" style="width:{{ c['stress_level'] * 10 }}%;background:var(--danger)"></div></div>
+              <strong>{{ c['stress_level'] }}/10</strong>
+            </div>
+          </div>
+          {% if c['notes'] %}<p class="ci-notes">{{ c['notes'] }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="no-entries">No check-ins yet. Complete one above!</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

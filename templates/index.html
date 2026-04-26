@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-orb orb-1"></div>
+  <div class="hero-orb orb-2"></div>
+  <div class="hero-orb orb-3"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge animate-in">
+      <span class="badge-dot"></span>
+      AI-Powered · NLP-Based · Real-time Detection
+    </div>
+    <h1 class="hero-title animate-in delay-1">
+      Your mind<br/>
+      <span class="gradient-text">deserves</span><br/>
+      better care.
+    </h1>
+    <p class="hero-sub animate-in delay-2">
+      MindWave uses trained NLP models to detect emotions, predict mental health risk,
+      and provide personalized coping strategies — before the crisis hits.
+    </p>
+    <div class="hero-actions animate-in delay-3">
+      {% if user %}
+        <a href="{{ url_for('dashboard') }}" class="btn-primary">Go to Dashboard →</a>
+        <a href="{{ url_for('journal') }}" class="btn-ghost">Write a Journal Entry</a>
+      {% else %}
+        <a href="{{ url_for('register') }}" class="btn-primary">Start Free — No Card Needed</a>
+        <a href="{{ url_for('login') }}" class="btn-ghost">Login →</a>
+      {% endif %}
+    </div>
+    <div class="hero-stats animate-in delay-4">
+      <div class="stat">
+        <span class="stat-num">7</span>
+        <span class="stat-label">Emotions detected</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">3</span>
+        <span class="stat-label">NLP models trained</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">Real-time</span>
+        <span class="stat-label">Text analysis</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual animate-in delay-2">
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="screen-header">
+          <span class="screen-avatar">◉</span>
+          <div>
+            <div class="screen-name">MindWave AI</div>
+            <div class="screen-status">NLP Engine · Active</div>
+          </div>
+        </div>
+        <div class="screen-messages">
+          <div class="msg ai">How are you feeling today?</div>
+          <div class="msg user">A bit anxious about work lately...</div>
+          <div class="msg ai">Detected: <strong>Anxiety</strong> · Risk: Medium<br/>Try 4-7-8 breathing now.</div>
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+        <div class="screen-mood-bar">
+          <div class="mood-label">Wellness Score</div>
+          <div class="mood-track">
+            <div class="mood-fill" style="width:62%"></div>
+          </div>
+          <div class="mood-score">62 / 100 · Moderate</div>
+        </div>
+      </div>
+    </div>
+    <div class="float-card card-1">
+      <div class="fc-icon">🧠</div>
+      <div class="fc-text">NLP detected<br/><strong>Anxiety pattern</strong></div>
+    </div>
+    <div class="float-card card-2">
+      <div class="fc-icon">🌙</div>
+      <div class="fc-text">Sentiment<br/><strong>Improving +12%</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW NLP WORKS -->
+<section class="problem-banner">
+  <div class="problem-inner">
+    <div class="problem-stat"><span>3</span><p>trained NLP classifiers: emotion, sentiment & risk</p></div>
+    <div class="problem-stat"><span>7</span><p>emotion categories detected from your text</p></div>
+    <div class="problem-stat"><span>TF-IDF</span><p>+ Logistic Regression model architecture</p></div>
+    <div class="problem-stat"><span>100%</span><p>local analysis — your data stays private</p></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="section-label">How MindWave Works</div>
+  <h2 class="section-title">Write. Analyze. Heal.</h2>
+  <p class="section-sub">Our NLP pipeline processes your journal entries through 3 trained models to understand your emotional state and guide you forward.</p>
+
+  <div class="steps-grid">
+    <div class="step-card scroll-reveal">
+      <div class="step-num">01</div>
+      <div class="step-icon">📝</div>
+      <h3>Write Freely</h3>
+      <p>Journal your thoughts, feelings, or daily experiences. No structure needed — just honest expression in your own words.</p>
+    </div>
+    <div class="step-card scroll-reveal">
+      <div class="step-num">02</div>
+      <div class="step-icon">🤖</div>
+      <h3>NLP Analysis</h3>
+      <p>Our TF-IDF + Logistic Regression pipeline classifies your entry into emotion, sentiment, and risk level — in milliseconds.</p>
+    </div>
+    <div class="step-card scroll-reveal">
+      <div class="step-num">03</div>
+      <div class="step-icon">📊</div>
+      <h3>Track Patterns</h3>
+      <p>Your personal dashboard shows mood trends, emotion distributions, and wellness scores evolving over time with real data.</p>
+    </div>
+    <div class="step-card scroll-reveal">
+      <div class="step-num">04</div>
+      <div class="step-icon">💡</div>
+      <h3>Get Recommendations</h3>
+      <p>AI-generated, evidence-based coping strategies tailored to your specific detected emotion and risk level.</p>
+    </div>
+  </div>
+</section>
+
+<!-- NLP MODEL DETAILS -->
+<section class="nlp-section">
+  <div class="nlp-inner">
+    <div class="nlp-text">
+      <div class="section-label">The NLP Engine</div>
+      <h2 class="section-title">How our models were trained</h2>
+      <p>MindWave's backend runs three independent classifiers, all trained on labeled mental health text data:</p>
+      <div class="model-list">
+        <div class="model-item">
+          <div class="mi-badge">Model 1</div>
+          <div>
+            <strong>Emotion Classifier</strong>
+            <p>Detects: anxiety, depression, stress, hopeful, calm, anger, loneliness</p>
+          </div>
+        </div>
+        <div class="model-item">
+          <div class="mi-badge">Model 2</div>
+          <div>
+            <strong>Sentiment Analyzer</strong>
+            <p>Classifies text as positive, neutral, or negative</p>
+          </div>
+        </div>
+        <div class="model-item">
+          <div class="mi-badge">Model 3</div>
+          <div>
+            <strong>Risk Level Predictor</strong>
+            <p>Assesses distress level: low, medium, or high — triggers escalation if needed</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:1rem;font-size:0.85rem;color:var(--text3);">
+        Architecture: TF-IDF (5000 features, 1-3 ngrams) → Logistic Regression (balanced class weights)
+        | Trained locally via <code>model/train_model.py</code>
+      </p>
+    </div>
+    <div class="nlp-demo">
+      <div class="demo-card">
+        <div class="demo-label">Live NLP Demo</div>
+        <textarea id="demoInput" placeholder="Type how you're feeling..." rows="4"></textarea>
+        <button class="btn-primary" onclick="runDemo()" id="demoBtn">
+          {% if user %}Analyze Text →{% else %}<a href="{{ url_for('login') }}" style="color:inherit">Login to Analyze →</a>{% endif %}
+        </button>
+        <div id="demoResult" class="demo-result" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-orb"></div>
+  <div class="cta-content">
+    {% if user %}
+      <h2>Welcome back, {{ user['username'] }} 👋</h2>
+      <p>Continue your wellness journey — your dashboard is ready.</p>
+      <a href="{{ url_for('dashboard') }}" class="btn-primary btn-large">Open Dashboard →</a>
+    {% else %}
+      <h2>Start your mental health journey today</h2>
+      <p>Free. Private. Powered by real AI. No credit card needed.</p>
+      <a href="{{ url_for('register') }}" class="btn-primary btn-large">Create Free Account →</a>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+{% if user %}
+async function runDemo() {
+  const text = document.getElementById('demoInput').value.trim();
+  if (!text) return;
+  const btn = document.getElementById('demoBtn');
+  btn.textContent = 'Analyzing...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    const data = await res.json();
+    const r = document.getElementById('demoResult');
+    r.style.display = 'block';
+    const riskColor = {high:'var(--danger)',medium:'var(--warn)',low:'var(--accent3)'}[data.risk_level] || 'var(--text)';
+    r.innerHTML = `
+      <div class="result-row"><span>Emotion</span><strong>${data.emotion}</strong></div>
+      <div class="result-row"><span>Sentiment</span><strong>${data.sentiment}</strong></div>
+      <div class="result-row"><span>Risk Level</span><strong style="color:${riskColor}">${data.risk_level.toUpperCase()}</strong></div>
+      <div class="result-row"><span>Wellness Score</span><strong>${data.wellness_score}/100</strong></div>
+      <div class="recs"><strong>Recommendations:</strong><ul>${data.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul></div>
+    `;
+  } catch(e) {
+    document.getElementById('demoResult').innerHTML = '<p style="color:var(--danger)">Analysis failed. Try again.</p>';
+    document.getElementById('demoResult').style.display = 'block';
+  }
+  btn.textContent = 'Analyze Again →';
+  btn.disabled = false;
+}
+{% else %}
+function runDemo() {
+  window.location.href = "{{ url_for('login') }}";
+}
+{% endif %}
+</script>
+{% endblock %}

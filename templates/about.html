@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="about-page">
+  <div class="page-hero-inner">
+    <div class="section-label">Our Mission</div>
+    <h1>Making mental healthcare accessible through AI.</h1>
+    <p>MindWave was built for IdeaJam 2026 to solve Problem Statement #16 — AI-Powered Personalized Mental Health Support and Early Detection Platform.</p>
+  </div>
+
+  <div class="about-content-wrap">
+
+    <div class="about-block">
+      <h2>The Problem</h2>
+      <p>Mental health issues affect 1 in 4 people globally. 75% go untreated. The average time between first symptoms and treatment is 10 years. In India, there are only 0.3 psychiatrists per 100,000 people. AI is uniquely positioned to bridge this gap — available 24/7, stigma-free, and scalable to millions.</p>
+    </div>
+
+    <div class="about-block">
+      <h2>Our Solution Architecture</h2>
+      <div class="tech-stack">
+        <div class="ts-item"><span>🐍</span><div><strong>Python + Flask</strong><p>Backend server, routing, authentication, and API endpoints</p></div></div>
+        <div class="ts-item"><span>🤖</span><div><strong>scikit-learn NLP</strong><p>TF-IDF vectorizer + Logistic Regression — 3 trained classifiers</p></div></div>
+        <div class="ts-item"><span>🗄️</span><div><strong>SQLite</strong><p>Lightweight relational database for users, journals, and check-ins</p></div></div>
+        <div class="ts-item"><span>📊</span><div><strong>Chart.js</strong><p>Interactive real-time charts on the personal dashboard</p></div></div>
+        <div class="ts-item"><span>🌐</span><div><strong>Jinja2 Templates</strong><p>Server-side rendering with Flask's template engine</p></div></div>
+        <div class="ts-item"><span>🔐</span><div><strong>SHA-256 Auth</strong><p>Secure password hashing and session-based authentication</p></div></div>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <h2>NLP Model Details</h2>
+      <p>All models are trained by running <code>model/train_model.py</code>. The training pipeline:</p>
+      <ol class="tech-list">
+        <li><strong>Dataset:</strong> 73 labeled mental health text samples (emotion, sentiment, risk) — augmented to 219 via synonym replacement</li>
+        <li><strong>Preprocessing:</strong> Lowercasing, URL removal, special character stripping, whitespace normalization</li>
+        <li><strong>Vectorization:</strong> TF-IDF with 5000 max features, 1-3 word n-grams, sublinear TF scaling</li>
+        <li><strong>Classification:</strong> Logistic Regression with balanced class weights, max 500 iterations</li>
+        <li><strong>Output:</strong> 3 .pkl model files + label encoders saved with joblib</li>
+      </ol>
+    </div>
+
+    <div class="about-block">
+      <h2>Why AI for Mental Health?</h2>
+      <div class="why-grid">
+        <div class="why-card"><span>📡</span><h4>Always Available</h4><p>Mental health crises don't follow business hours. AI provides 24/7 support.</p></div>
+        <div class="why-card"><span>💰</span><h4>Affordable</h4><p>Traditional therapy costs ₹2,000–₹8,000 per session. AI scales to millions at near-zero cost.</p></div>
+        <div class="why-card"><span>🎭</span><h4>Stigma-Free</h4><p>People share more honestly with AI than humans, enabling earlier and more accurate detection.</p></div>
+        <div class="why-card"><span>📊</span><h4>Pattern Detection</h4><p>AI identifies linguistic and behavioral patterns that predict episodes weeks in advance.</p></div>
+      </div>
+    </div>
+
+    <div class="about-block ethics-block">
+      <h2>⚠ Ethics & Limitations</h2>
+      <p>MindWave is an educational/research prototype built for IdeaJam 2026. It is <strong>not a medical device</strong> and should not be used as a substitute for professional mental health care. The NLP models are trained on a small synthetic dataset and may not generalize to all real-world cases. High-risk detections should always be followed up with a qualified mental health professional.</p>
+      <p style="margin-top:0.75rem">Crisis resources (India): <strong>iCall: 9152987821</strong> · Vandrevala Foundation: <strong>1860-2662-345</strong></p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

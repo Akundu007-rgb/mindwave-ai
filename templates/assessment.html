@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Mental Health Assessment{% endblock %}
+{% block content %}
+<div class="assessment-page">
+
+  <div class="page-hero-inner">
+    <div class="section-label">Free Screening Tool</div>
+    <h1>7-Question Mental Health Assessment</h1>
+    <p>Based on PHQ-9 and GAD-7 clinical screening protocols. Our AI analyses your answers, maps them to our NLP emotion model, and gives you an instant personalised wellness score. Takes under 3 minutes.</p>
+    <div class="assess-badges">
+      <span class="abadge">🔒 Private</span>
+      <span class="abadge">⏱ 3 minutes</span>
+      <span class="abadge">🧠 NLP-analysed</span>
+      <span class="abadge">💾 Saved to your history</span>
+    </div>
+  </div>
+
+  {% if not result %}
+  <!-- ═══ FORM ═══ -->
+  <div class="assess-layout">
+    <div class="assess-form-col">
+
+      {% if error %}
+      <div class="auth-error">⚠ {{ error }}</div>
+      {% endif %}
+
+      <form method="POST" id="assessForm">
+
+        <!-- Progress bar -->
+        <div class="progress-header">
+          <span id="progressLabel">Question 1 of {{ questions|length }}</span>
+          <span id="progressPct">0% complete</span>
+        </div>
+        <div class="assess-progress-track">
+          <div class="assess-progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+
+        <!-- Questions -->
+        {% for q in questions %}
+        {% set q_index = loop.index %}
+        <div class="q-card {% if loop.index == 1 %}active{% endif %}" id="qcard-{{ loop.index }}" data-qnum="{{ loop.index }}">
+          <div class="q-number">Question {{ loop.index }} / {{ questions|length }}
+            <span class="q-category">{{ q.category }}</span>
+          </div>
+          <div class="q-text">{{ q.text }}</div>
+          <div class="q-options">
+            {% for opt in q.options %}
+            <label class="q-opt-label" for="q{{ q.id }}_{{ loop.index0 }}">
+              <input type="radio" id="q{{ q.id }}_{{ loop.index0 }}"
+                     name="q{{ q.id }}" value="{{ opt.score }}"
+                     onchange="optionSelected({{ q_index }})"/>
+              <span class="q-opt-box">
+                <span class="q-opt-radio"></span>
+                <span class="q-opt-text">{{ opt.label }}</span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+
+          <div class="q-nav-row">
+            {% if not loop.first %}
+            <button type="button" class="btn-ghost" onclick="goTo({{ loop.index - 1 }})">← Back</button>
+            {% else %}
+            <span></span>
+            {% endif %}
+
+            {% if not loop.last %}
+            <button type="button" class="btn-primary q-next-btn" id="next-{{ loop.index }}"
+                    onclick="goTo({{ loop.index + 1 }})" disabled>Next →</button>
+            {% else %}
+            <button type="submit" class="btn-primary q-next-btn" id="next-{{ loop.index }}" disabled>
+              See My Results →
+            </button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+
+      </form>
+    </div>
+
+    <!-- Sidebar: previous assessments -->
+    <div class="assess-sidebar">
+      <h3>Previous Assessments</h3>
+      {% if prev_assessments %}
+        {% for pa in prev_assessments %}
+        <div class="prev-assess-card">
+          <div class="pac-top">
+            <span class="badge-risk risk-{{ pa['risk_level'] }}">{{ pa['wellness_score'] }}/100</span>
+            <span class="pac-date">{{ pa['created'][:10] }}</span>
+          </div>
+          <div class="pac-emotion">
+            <span class="badge-emotion emotion-{{ pa['emotion'] }}">{{ pa['emotion'] }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="no-entries">Complete your first assessment to see history here.</p>
+      {% endif %}
+      <div class="sidebar-tip">
+        <strong>💡 Clinical Note</strong>
+        <p>This assessment is modelled on the PHQ-9 (depression) and GAD-7 (anxiety) — two of the most widely validated mental health screening tools worldwide.</p>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- ═══ RESULT ═══ -->
+  <div class="result-layout">
+
+    <!-- Big score card -->
+    <div class="result-score-card result-{{ result.color }}">
+      <div class="rsc-label">Your Wellness Score</div>
+      <div class="rsc-number">{{ result.wellness_score }}</div>
+      <div class="rsc-bar-wrap">
+        <div class="rsc-bar-track">
+          <div class="rsc-bar-fill" style="width:{{ result.wellness_score }}%"></div>
+        </div>
+      </div>
+      <div class="rsc-level">{{ result.label }}</div>
+      <div class="rsc-sub">Score: {{ result.total_score }} / {{ result.max_score }} ({{ result.pct }}% distress indicators)</div>
+    </div>
+
+    <!-- Description -->
+    <div class="result-desc-card">
+      <div class="section-label">What This Means</div>
+      <p class="result-desc-text">{{ result.desc }}</p>
+
+      <!-- Category breakdown -->
+      <div class="cat-breakdown">
+        <h4>Area-by-area breakdown</h4>
+        <div class="cat-grid">
+          {% for cat, score in result.category_scores.items() %}
+          <div class="cat-item">
+            <div class="cat-name">{{ cat }}</div>
+            <div class="cat-bar-track">
+              <div class="cat-bar-fill cat-{{ score }}" style="width:{{ (score / 3 * 100)|int }}%"></div>
+            </div>
+            <div class="cat-score">
+              {% if score == 0 %}✓ Good
+              {% elif score == 1 %}~ Mild
+              {% elif score == 2 %}! Moderate
+              {% else %}⚠ Severe{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="result-recs">
+        <h4>💡 Personalised Recommendations</h4>
+        <ul>
+          {% for rec in result.recommendations %}
+          <li>{{ rec }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      {% if result.color == 'red' %}
+      <div class="crisis-alert">
+        <strong>⚠ Immediate Support Available</strong>
+        <p>iCall (India): <strong>9152987821</strong> · Vandrevala Foundation: <strong>1860-2662-345</strong><br>
+        If in immediate danger, call emergency services: <strong>112</strong></p>
+      </div>
+      {% endif %}
+
+      <div class="result-actions">
+        <a href="{{ url_for('journal') }}" class="btn-primary">Write a Journal Entry →</a>
+        <a href="{{ url_for('assessment') }}" class="btn-ghost">Retake Assessment</a>
+        <a href="{{ url_for('dashboard') }}" class="btn-ghost">View Dashboard</a>
+      </div>
+
+      <p class="result-disclaimer">This assessment is for informational purposes only and does not constitute a medical diagnosis. Please consult a qualified mental health professional for diagnosis and treatment.</p>
+    </div>
+
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+let answered = {};
+const total = {{ questions|length }};
+
+function optionSelected(qnum) {
+  answered[qnum] = true;
+  const nextBtn = document.getElementById('next-' + qnum);
+  if (nextBtn) nextBtn.disabled = false;
+  updateProgress();
+}
+
+function goTo(num) {
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('active'));
+  const target = document.getElementById('qcard-' + num);
+  if (target) {
+    target.classList.add('active');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  updateProgress(num);
+}
+
+function updateProgress(current) {
+  const done  = Object.keys(answered).length;
+  const pct   = Math.round(done / total * 100);
+  const label = document.getElementById('progressLabel');
+  const fill  = document.getElementById('progressFill');
+  const pctEl = document.getElementById('progressPct');
+  if (label) label.textContent = 'Question ' + (current || done + 1) + ' of ' + total;
+  if (fill)  fill.style.width  = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '% complete';
+}
+
+// Animate result bar on load
+window.addEventListener('load', () => {
+  const fill = document.querySelector('.rsc-bar-fill');
+  if (fill) {
+    const target = fill.style.width;
+    fill.style.width = '0%';
+    setTimeout(() => { fill.style.width = target; }, 400);
+  }
+  document.querySelectorAll('.cat-bar-fill').forEach(f => {
+    const t = f.style.width;
+    f.style.width = '0%';
+    setTimeout(() => { f.style.width = t; }, 600);
+  });
+});
+</script>
+{% endblock %}
