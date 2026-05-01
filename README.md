@@ -1,5 +1,4 @@
 # MindWave — AI Mental Health Platform
-### IdeaJam 2026 · Problem Statement #16
 
 ---
 
