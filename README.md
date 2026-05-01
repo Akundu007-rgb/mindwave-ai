@@ -1,4 +1,4 @@
-<h1 align="center">🧠 MindWave — AI Mental Health Platform</h1>
+# MindWave — AI Mental Health Platform
 
 <p align="center">
   <b>Write. Analyze. Heal.</b><br>
@@ -16,440 +16,170 @@
 
 ---
 
-# What is MindWave?
+## What is MindWave?
 
-MindWave is a full-stack AI-powered mental health platform that helps users write journal entries, track daily check-ins, analyze emotions using NLP models, and visualize wellness insights through an interactive dashboard.
-
-It is built with:
-
-- Python and Flask backend
-- NLP models using scikit-learn
-- TF-IDF vectorization
-- Logistic Regression classifiers
-- SQLite database
-- User authentication
-- Chart.js dashboard
-- HTML, CSS, JavaScript, and Jinja2 templates
+MindWave is a full-stack AI-powered mental health platform built with:
+- **Python + Flask** backend
+- **NLP models** trained with scikit-learn (TF-IDF + Logistic Regression)
+- **SQLite** database with per-user data isolation
+- **User authentication** (register / login / logout)
+- **Dynamic dashboard** with Chart.js visualizations
+- **Responsive frontend** (HTML/CSS/JS + Jinja2 templates)
 
 ---
 
-# Key Features
+## Project Structure
 
-- AI-powered journal analysis
-- Emotion classification
-- Sentiment detection
-- Risk level prediction
-- Wellness score generation
-- Personalized recommendations
-- Daily mood, sleep, and stress check-ins
-- Dynamic dashboard with visual charts
-- User registration and login
-- Per-user data isolation
-- Responsive frontend design
-
----
-
-# Screenshots
-
-## Landing Page
-
-![Landing Page](assets/screenshots/landing.png)
-
-## Journal Page
-
-![Journal Page](assets/screenshots/journal.png)
-
-## NLP Analysis Result
-
-![NLP Analysis](assets/screenshots/analysis.png)
-
-## Mental Health Assessment
-
-![Assessment Page](assets/screenshots/assessment.png)
-
-## Dashboard
-
-![Dashboard](assets/screenshots/dashboard.png)
-
-## Daily Check-in
-
-![Check-in Page](assets/screenshots/checkin.png)
-
-## History Page
-
-![History Page](assets/screenshots/history.png)
-
----
-
-# System Architecture
-
-```text
-User Input
-|
-v
-Flask Backend
-|
-v
-NLP Processing Pipeline
-|
-v
-TF-IDF Vectorizer
-|
-v
-Machine Learning Models
-|
-v
-Prediction Engine
-|
-v
-SQLite Database
-|
-v
-Dashboard API
-|
-v
-Chart.js Frontend
 ```
-
----
-
-# Tech Stack
-
-```text
-Backend: Python, Flask
-Frontend: HTML, CSS, JavaScript, Jinja2
-Machine Learning: scikit-learn
-NLP: TF-IDF Vectorizer
-Database: SQLite
-Visualization: Chart.js
-Authentication: Flask Sessions, Hashed Passwords
-```
-
----
-
-# Project Structure
-
-```text
 mindwave_app/
-|
-|-- app.py
-|-- requirements.txt
-|
-|-- model/
-|   |-- train_model.py
-|   |-- tfidf_vectorizer.pkl
-|   |-- emotion_classifier.pkl
-|   |-- sentiment_classifier.pkl
-|   |-- risk_classifier.pkl
-|   |-- label_encoders.pkl
-|   |-- model_meta.json
-|
-|-- instance/
-|   |-- mindwave.db
-|
-|-- templates/
-|   |-- base.html
-|   |-- index.html
-|   |-- login.html
-|   |-- register.html
-|   |-- dashboard.html
-|   |-- journal.html
-|   |-- checkin.html
-|   |-- history.html
-|   |-- features.html
-|   |-- about.html
-|
-|-- static/
-|   |-- css/
-|   |   |-- main.css
-|   |
-|   |-- js/
-|       |-- main.js
-|
-|-- assets/
-    |-- screenshots/
-        |-- landing.png
-        |-- journal.png
-        |-- analysis.png
-        |-- assessment.png
-        |-- dashboard.png
-        |-- checkin.png
-        |-- history.png
+├── app.py                  ← Flask application (main entry point)
+├── requirements.txt        ← Python dependencies
+├── model/
+│   ├── train_model.py      ← NLP model training script
+│   ├── tfidf_vectorizer.pkl
+│   ├── emotion_classifier.pkl
+│   ├── sentiment_classifier.pkl
+│   ├── risk_classifier.pkl
+│   ├── label_encoders.pkl
+│   └── model_meta.json
+├── instance/
+│   └── mindwave.db         ← SQLite database (auto-created on first run)
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   ├── login.html
+│   ├── register.html
+│   ├── dashboard.html
+│   ├── journal.html
+│   ├── checkin.html
+│   ├── history.html
+│   ├── features.html
+│   └── about.html
+└── static/
+    ├── css/main.css
+    └── js/main.js
 ```
 
 ---
 
-# NLP Pipeline
+## How to Run in VS Code
 
-```text
-1. User writes a journal entry.
-2. Text is cleaned and preprocessed.
-3. TF-IDF converts the text into numerical features.
-4. Emotion classifier predicts the emotional state.
-5. Sentiment classifier predicts positive, neutral, or negative tone.
-6. Risk classifier predicts low, medium, or high risk.
-7. Wellness score is generated.
-8. Personalized recommendations are created.
-9. Results are stored in SQLite.
-10. Dashboard updates using saved user data.
-```
-
----
-
-# Machine Learning Models
-
-```text
-Emotion Classifier:
-Detects emotional state such as anxiety, depression, stress, hopeful, calm, anger, and loneliness.
-
-Sentiment Classifier:
-Predicts whether the journal text is positive, neutral, or negative.
-
-Risk Classifier:
-Detects whether the mental health risk is low, medium, or high.
-
-Algorithm Used:
-Logistic Regression
-
-Feature Extraction:
-TF-IDF Vectorizer
-```
-
----
-
-# Database Schema
-
-```text
-users table:
-- id
-- username
-- email
-- hashed_password
-- created
-
-journals table:
-- id
-- user_id
-- text
-- emotion
-- sentiment
-- risk_level
-- wellness_score
-- created
-
-checkins table:
-- id
-- user_id
-- mood_score
-- sleep_hours
-- stress_level
-- notes
-- created
-```
-
----
-
-# Dashboard Features
-
-```text
-The dashboard provides real-time visual insights using user data.
-
-Features:
-- Wellness score trend
-- Emotion distribution chart
-- Daily check-in trends
-- Recent journal entries
-- Activity statistics
-- Latest wellness status
-
-Dashboard data is powered through:
-/api/dashboard_data
-```
-
----
-
-# Authentication and Security
-
-```text
-Security features:
-- User registration
-- User login
-- User logout
-- Session-based authentication
-- Hashed password storage
-- Per-user data separation
-- Protected dashboard and journal routes
-```
-
----
-
-# How to Run the Project
-
-## 1. Clone the Repository
-
+### Step 1 — Prerequisites
+Make sure you have **Python 3.9+** installed. Check with:
 ```bash
-git clone https://github.com/Akundu007-rgb/mindwave-ai.git
-cd mindwave-ai
+python --version
 ```
 
-## 2. Create Virtual Environment
+### Step 2 — Open in VS Code
+```
+File → Open Folder → select the mindwave_app folder
+```
 
+### Step 3 — Open Terminal in VS Code
+```
+Terminal → New Terminal   (or Ctrl + `)
+```
+
+### Step 4 — Create a Virtual Environment
 ```bash
 python -m venv venv
 ```
 
-## 3. Activate Virtual Environment
+Activate it:
+- **Windows:**  `venv\Scripts\activate`
+- **Mac/Linux:** `source venv/bin/activate`
 
-Windows:
+You should see `(venv)` in your terminal prompt.
 
-```bash
-venv\Scripts\activate
-```
-
-Mac/Linux:
-
-```bash
-source venv/bin/activate
-```
-
-## 4. Install Dependencies
-
+### Step 5 — Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-## 5. Train NLP Models
-
+### Step 6 — Train the NLP Models
+**This is required before running the app.**
 ```bash
 python model/train_model.py
 ```
+This trains 3 classifiers and saves `.pkl` files in the `model/` folder.
+You'll see model accuracy reports printed in the terminal.
 
-## 6. Run Flask App
-
+### Step 7 — Run the Flask App
 ```bash
 python app.py
 ```
 
-## 7. Open in Browser
-
-```text
-http://127.0.0.1:5000
-```
+Open your browser at: **http://127.0.0.1:5000**
 
 ---
 
-# Pages and Routes
+## How It Works
 
-```text
-Home:
-Route: /
-Description: Landing page and project introduction
+### NLP Pipeline
+1. User writes a journal entry
+2. Text is preprocessed (lowercased, cleaned)
+3. **TF-IDF vectorizer** converts text to feature vectors (5000 features, 1-3 ngrams)
+4. Three classifiers run in parallel:
+   - **Emotion classifier** → anxiety / depression / stress / hopeful / calm / anger / loneliness
+   - **Sentiment classifier** → positive / neutral / negative
+   - **Risk classifier** → low / medium / high
+5. A **wellness score** (0–100) is computed from the outputs
+6. Evidence-based **recommendations** are generated based on emotion + risk
+7. All results are stored per-user in SQLite
 
-Register:
-Route: /register
-Description: Create a new account
+### Database Schema
+- `users` — id, username, email, hashed_password, created
+- `journals` — id, user_id, text, emotion, sentiment, risk_level, wellness_score, created
+- `checkins` — id, user_id, mood_score, sleep_hours, stress_level, notes, created
 
-Login:
-Route: /login
-Description: Login to existing account
-
-Dashboard:
-Route: /dashboard
-Description: User analytics dashboard
-
-Journal:
-Route: /journal
-Description: Write and analyze journal entries
-
-Check-in:
-Route: /checkin
-Description: Track mood, sleep, and stress
-
-History:
-Route: /history
-Description: View past journal entries and check-ins
-
-Features:
-Route: /features
-Description: Platform feature overview
-
-About:
-Route: /about
-Description: Project details, tech stack, and ethics
-```
+### Dashboard (Dynamic)
+- Pulls real data from `/api/dashboard_data` endpoint
+- Wellness trend chart — from journal entries
+- Emotion distribution donut — from all entries
+- Check-in trend bar chart — from daily check-ins
+- All charts update automatically with new entries
 
 ---
 
-# API Endpoints
+## Pages
 
-```text
-/api/analyze
-Method: POST
-Authentication: Required
-Description: Analyze journal text using NLP models
-
-/api/dashboard_data
-Method: GET
-Authentication: Required
-Description: Fetch dashboard chart data as JSON
-```
-
----
-
-# Future Enhancements
-
-```text
-- BERT-based emotion detection
-- Mobile app version
-- Cloud deployment
-- Doctor consultation module
-- Emergency support integration
-- PDF wellness report generation
-- Advanced analytics
-- Multilingual support
-```
+| Page | URL | Description |
+|------|-----|-------------|
+| Home | `/` | Landing page + live NLP demo (login required) |
+| Register | `/register` | Create a new account |
+| Login | `/login` | Login to your account |
+| Dashboard | `/dashboard` | Personal dynamic dashboard with charts |
+| Journal | `/journal` | Write entries, get instant AI analysis |
+| Check-in | `/checkin` | Log daily mood, sleep, and stress |
+| History | `/history` | Full history of all entries |
+| Features | `/features` | Platform feature overview |
+| About | `/about` | Project info, tech stack, ethics |
 
 ---
 
-# Ethics and Disclaimer
+## API Endpoints
 
-```text
-MindWave is an educational and research-based prototype.
-
-It is not a medical device and should not be used as a replacement for professional mental health care.
-
-The predictions are generated using machine learning models and may not always be accurate.
-
-For serious mental health concerns, users should contact a qualified professional.
-```
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/analyze` | POST | ✅ | Analyze text with NLP models |
+| `/api/dashboard_data` | GET | ✅ | Get user's chart data as JSON |
 
 ---
 
-# Crisis Resources India
-
-```text
-iCall: 9152987821
-Vandrevala Foundation: 1860-2662-345
-NIMHANS: 080-46110007
-```
+## Recommended VS Code Extensions
+- **Python** (Microsoft) — syntax highlighting + IntelliSense
+- **Pylance** — type checking
+- **Flask Snippets** — Flask template shortcuts
+- **SQLite Viewer** — browse your database visually
 
 ---
 
-# Author
+## Important Notice
 
-```text
-Anirban Kundu
-GitHub: https://github.com/Akundu007-rgb
-```
+MindWave is an **educational research prototype** built for IdeaJam 2026.
+It is **not a medical device** and should not replace professional mental health care.
 
----
-
-# Support
-
-```text
-If you like this project, consider giving it a star on GitHub.
-```
-
-<p align="center">
-  Made with ❤️ using AI for better mental health.
-</p>
+**Crisis Resources (India):**
+- iCall: **9152987821**
+- Vandrevala Foundation: **1860-2662-345**
+- NIMHANS: **080-46110007**
