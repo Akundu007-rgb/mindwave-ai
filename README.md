@@ -14,7 +14,15 @@
 ![Tests](https://img.shields.io/badge/Tests-pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-00C851?style=for-the-badge)
 
-[**Features**](#-features) · [**Demo**](#-screenshots) · [**How It Works**](#-how-it-works) · [**Tech Stack**](#-tech-stack) · [**Quickstart**](#-quickstart) · [**Testing**](#-testing) · [**Structure**](#-project-structure) · [**API**](#-api-reference) · [**Ethics**](#️-ethics--disclaimer)
+[![Features](https://img.shields.io/badge/-Features-1a1a2e?style=flat-square)](#-features)
+[![Demo](https://img.shields.io/badge/-Demo-1a1a2e?style=flat-square)](#-screenshots)
+[![How It Works](https://img.shields.io/badge/-How%20It%20Works-1a1a2e?style=flat-square)](#-how-it-works)
+[![Tech Stack](https://img.shields.io/badge/-Tech%20Stack-1a1a2e?style=flat-square)](#-tech-stack)
+[![Quickstart](https://img.shields.io/badge/-Quickstart-1a1a2e?style=flat-square)](#-quickstart)
+[![Testing](https://img.shields.io/badge/-Testing-1a1a2e?style=flat-square)](#-testing)
+[![Structure](https://img.shields.io/badge/-Structure-1a1a2e?style=flat-square)](#-project-structure)
+[![API](https://img.shields.io/badge/-API-1a1a2e?style=flat-square)](#-api-reference)
+[![Ethics](https://img.shields.io/badge/-Ethics-1a1a2e?style=flat-square)](#️-ethics--disclaimer)
 
 </div>
 
