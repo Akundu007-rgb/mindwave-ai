@@ -1,0 +1,33 @@
+{
+  "version": "2.0",
+  "emotions": [
+    "anger",
+    "anxiety",
+    "calm",
+    "depression",
+    "hopeful",
+    "loneliness",
+    "stress"
+  ],
+  "sentiments": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "risk_levels": [
+    "high",
+    "low",
+    "medium"
+  ],
+  "emotion_acc": 0.5,
+  "sentiment_acc": 0.9286,
+  "risk_acc": 0.6667,
+  "emotion_samples": 60,
+  "sentiment_samples": 68,
+  "risk_samples": 60,
+  "uses_kaggle": {
+    "tweet_emotions": true,
+    "sentiment140": false,
+    "suicide_detection": true
+  }
+}

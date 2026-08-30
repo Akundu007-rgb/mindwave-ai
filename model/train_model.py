@@ -1,233 +1,427 @@
 """
-MindWave NLP Model Trainer
-===========================
-Trains a multi-output NLP classifier on mental health text data.
-Uses TF-IDF + Logistic Regression (production-ready, no GPU needed).
+MindWave NLP Model Trainer — v2 (Kaggle Dataset Edition)
+=========================================================
 
-Outputs:
-  - model/emotion_classifier.pkl  : emotion label classifier
-  - model/sentiment_classifier.pkl: sentiment (positive/negative/neutral)
-  - model/risk_classifier.pkl     : distress risk level (low/medium/high)
-  - model/tfidf_vectorizer.pkl    : shared TF-IDF vectorizer
-  - model/label_encoders.pkl      : label encoders for each task
+REAL KAGGLE DATASETS USED:
+─────────────────────────────────────────────────────────
+1. Emotion Detection from Text
+   URL  : https://www.kaggle.com/datasets/pashupatigupta/emotion-detection-from-text
+   File : tweet_emotions.csv
+   Cols : tweet_id, sentiment, content
+   Size : ~40,000 tweets labelled with 13 emotions
+   Use  : Emotion classifier (we map 13 → 7 of our categories)
+
+2. Sentiment140 (Twitter Sentiment)
+   URL  : https://www.kaggle.com/datasets/kazanova/sentiment140
+   File : training.1600000.processed.noemoticon.csv
+   Cols : target(0/4), id, date, flag, user, text
+   Use  : Sentiment analyser (positive / negative)
+   Note : We sample 5000 rows per class for speed
+
+3. Suicide and Depression Detection
+   URL  : https://www.kaggle.com/datasets/nikhileswarkomati/suicide-watch
+   File : Suicide_Detection.csv
+   Cols : text, class  (suicide / non-suicide)
+   Use  : Risk level predictor (high risk = suicide class)
+
+HOW TO USE KAGGLE DATASETS:
+─────────────────────────────────────────────────────────
+1. Go to kaggle.com → create a free account
+2. Download each dataset CSV listed above
+3. Place them inside:   mindwave_app/data/
+   - data/tweet_emotions.csv
+   - data/sentiment140.csv         (rename the downloaded file)
+   - data/suicide_detection.csv    (rename if needed)
+4. Run:  python model/train_model.py
+
+If you do NOT have the Kaggle files yet, the script falls back
+to the built-in synthetic dataset automatically so the app still
+works while you gather the real data.
+─────────────────────────────────────────────────────────
 """
 
-import os, json, joblib, re
-import numpy as np
+import os, json, re, joblib, warnings
+import numpy  as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model             import LogisticRegression
+from sklearn.model_selection          import train_test_split, cross_val_score
+from sklearn.metrics                  import classification_report, accuracy_score
+from sklearn.preprocessing            import LabelEncoder
+from sklearn.pipeline                 import Pipeline
 
-# ── 1. DATASET ──────────────────────────────────────────────────────────────
-# Curated dataset covering: anxiety, depression, stress, hopeful, calm, anger
-# Each sample has: text, emotion, sentiment, risk_level
-# Dataset modeled after public mental health corpora (DAIC-WOZ style,
-# Reddit SuicideWatch, CLPsych shared tasks) — reproduced synthetically
-# for training purposes.
+warnings.filterwarnings("ignore")
 
-DATASET = [
-    # ── ANXIETY ──
-    {"text": "I can't stop worrying about everything. My heart races and I feel like something terrible is about to happen.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "The panic attacks are getting worse. I can't breathe properly and my hands won't stop shaking.", "emotion": "anxiety", "sentiment": "negative", "risk": "high"},
-    {"text": "I keep checking the locks over and over. I know it's irrational but I just cannot stop myself.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "Social situations terrify me. I rehearse conversations for hours and still freeze up when it actually happens.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "I've been catastrophizing everything at work. My boss said one thing and I spent the whole night convinced I was getting fired.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "The constant what-ifs are exhausting. I can't enjoy anything because my mind is always preparing for disaster.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "I feel a constant knot in my stomach. Eating has become difficult because of the persistent nausea from anxiety.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "My mind races at night and I can't fall asleep. Anxiety about tomorrow keeps me awake until 3am.", "emotion": "anxiety", "sentiment": "negative", "risk": "medium"},
-    {"text": "I'm scared to leave the house. Every time I try, the fear becomes overwhelming and I have to turn back.", "emotion": "anxiety", "sentiment": "negative", "risk": "high"},
-    {"text": "I feel a bit anxious before presentations but I usually manage to get through them okay.", "emotion": "anxiety", "sentiment": "neutral", "risk": "low"},
-    {"text": "Had a small panic moment this morning but breathing exercises really helped calm me down.", "emotion": "anxiety", "sentiment": "neutral", "risk": "low"},
-    {"text": "Worried about the interview tomorrow but I've prepared well and feel cautiously optimistic.", "emotion": "anxiety", "sentiment": "neutral", "risk": "low"},
-    {"text": "Sometimes I overthink but I'm learning to catch myself and redirect my thoughts.", "emotion": "anxiety", "sentiment": "positive", "risk": "low"},
+BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR  = os.path.join(BASE_DIR, "..", "data")
+MODEL_DIR = BASE_DIR   # save .pkl files right here in model/
 
-    # ── DEPRESSION ──
-    {"text": "I haven't gotten out of bed in three days. Everything feels completely pointless and I don't know why I bother.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "I used to love painting. Now I look at my brushes and feel nothing. The joy is just gone.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "I feel like a burden to everyone around me. They'd probably be better off without me.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "Nothing tastes good anymore. I eat just to survive but there's no pleasure in it.", "emotion": "depression", "sentiment": "negative", "risk": "medium"},
-    {"text": "Crying for no reason again. I was just sitting there and the tears started and wouldn't stop.", "emotion": "depression", "sentiment": "negative", "risk": "medium"},
-    {"text": "I feel completely empty inside. Not sad exactly, just hollow. Like there's no one home.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "Getting out of bed takes every ounce of energy I have. By the time I'm up, I'm already exhausted.", "emotion": "depression", "sentiment": "negative", "risk": "medium"},
-    {"text": "I've been canceling plans with friends for months. It's easier than pretending to be okay.", "emotion": "depression", "sentiment": "negative", "risk": "medium"},
-    {"text": "The future looks completely dark. I can't imagine things ever getting better.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "Feeling down today but I know these moods pass. I reached out to my therapist.", "emotion": "depression", "sentiment": "neutral", "risk": "low"},
-    {"text": "Had a rough week emotionally but journaling has been helping me process things.", "emotion": "depression", "sentiment": "neutral", "risk": "low"},
-    {"text": "Still struggling but I noticed I smiled genuinely for the first time in a while today.", "emotion": "depression", "sentiment": "positive", "risk": "low"},
-
-    # ── STRESS ──
-    {"text": "Work deadlines are crushing me. I'm working 14 hour days and I still can't keep up.", "emotion": "stress", "sentiment": "negative", "risk": "medium"},
-    {"text": "I feel like I'm drowning in responsibilities. The to-do list never ends and I'm falling apart.", "emotion": "stress", "sentiment": "negative", "risk": "medium"},
-    {"text": "My head is constantly pounding. The stress from the project is giving me daily migraines.", "emotion": "stress", "sentiment": "negative", "risk": "medium"},
-    {"text": "I've been snapping at my family because of work stress. I hate that I'm taking it out on them.", "emotion": "stress", "sentiment": "negative", "risk": "medium"},
-    {"text": "Juggling school, work, and family is impossible. I feel like I'm failing at all three.", "emotion": "stress", "sentiment": "negative", "risk": "medium"},
-    {"text": "The pressure is constant. Even on weekends I can't switch off because Monday is always looming.", "emotion": "stress", "sentiment": "negative", "risk": "medium"},
-    {"text": "Deadlines at work are tight but my team is supportive and we're managing well together.", "emotion": "stress", "sentiment": "neutral", "risk": "low"},
-    {"text": "Stressful day but a good workout helped. I'm learning better coping strategies slowly.", "emotion": "stress", "sentiment": "neutral", "risk": "low"},
-    {"text": "Work is busy but I'm proud of what we've accomplished this quarter.", "emotion": "stress", "sentiment": "positive", "risk": "low"},
-    {"text": "Stress is high but manageable. Breathing exercises before meetings have made a real difference.", "emotion": "stress", "sentiment": "positive", "risk": "low"},
-
-    # ── HOPEFUL / POSITIVE ──
-    {"text": "I started therapy last month and I'm already seeing improvements. Learning to challenge my negative thoughts.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "Today was a good day. I went for a walk, called a friend, and actually felt present in the moment.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "Recovery isn't linear but I'm making progress. Six months ago I couldn't have written this.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "Meditation has genuinely changed my relationship with anxiety. I feel more grounded now.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "I'm learning that it's okay to ask for help. Opened up to a colleague today and felt lighter.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "Exercise has become my anchor. Even a 20-minute walk shifts my mood significantly.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "I set small goals today and achieved them. Progress feels possible again.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "After months of struggling, I finally had a week where I felt like myself again.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "Gratitude journaling sounds cheesy but writing three good things every night really works for me.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-
-    # ── CALM / STABLE ──
-    {"text": "Feeling balanced today. Sleep was good, ate well, and took breaks throughout the day.", "emotion": "calm", "sentiment": "positive", "risk": "low"},
-    {"text": "Mindfulness practice is becoming second nature. I feel more centered than I have in years.", "emotion": "calm", "sentiment": "positive", "risk": "low"},
-    {"text": "Nothing major happening emotionally. Just steady and present.", "emotion": "calm", "sentiment": "neutral", "risk": "low"},
-    {"text": "Had a peaceful morning. Coffee, reading, gentle music. Good way to start the day.", "emotion": "calm", "sentiment": "positive", "risk": "low"},
-    {"text": "Feeling content. Not euphoric, just quietly satisfied with where things are.", "emotion": "calm", "sentiment": "positive", "risk": "low"},
-    {"text": "Everything feels manageable right now. Clear head, good sleep, connected with friends.", "emotion": "calm", "sentiment": "positive", "risk": "low"},
-
-    # ── ANGER ──
-    {"text": "I'm furious and I don't know what to do with it. Everything is making me rage.", "emotion": "anger", "sentiment": "negative", "risk": "medium"},
-    {"text": "I snapped at my partner over something trivial. The anger came out of nowhere and scared me.", "emotion": "anger", "sentiment": "negative", "risk": "medium"},
-    {"text": "I feel this burning resentment that won't go away. It's poisoning everything.", "emotion": "anger", "sentiment": "negative", "risk": "medium"},
-    {"text": "Had an argument but talked it through. Anger was valid but I expressed it constructively.", "emotion": "anger", "sentiment": "neutral", "risk": "low"},
-
-    # ── LONELINESS ──
-    {"text": "Surrounded by people but completely alone. No one really sees me.", "emotion": "loneliness", "sentiment": "negative", "risk": "high"},
-    {"text": "It's been weeks since anyone checked in on me. The silence is deafening.", "emotion": "loneliness", "sentiment": "negative", "risk": "high"},
-    {"text": "I moved to a new city and I don't know anyone. The isolation is crushing.", "emotion": "loneliness", "sentiment": "negative", "risk": "medium"},
-    {"text": "Reached out to an old friend today. Small connection but it helped enormously.", "emotion": "loneliness", "sentiment": "positive", "risk": "low"},
-    {"text": "Joined a community group. First session was awkward but hopeful.", "emotion": "loneliness", "sentiment": "positive", "risk": "low"},
-
-    # ── CRISIS INDICATORS ──
-    {"text": "I've been thinking that everyone would be better off without me. I'm tired of fighting.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "I don't see a point in continuing. The pain is too much and I don't know how to make it stop.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "I've been researching ways to hurt myself. I don't know what's stopping me.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-    {"text": "Wrote a note today but then deleted it. I'm scared of my own thoughts right now.", "emotion": "depression", "sentiment": "negative", "risk": "high"},
-
-    # ── MIXED / COMPLEX ──
-    {"text": "Good days and bad days. Today was somewhere in the middle — flat but not despairing.", "emotion": "depression", "sentiment": "neutral", "risk": "low"},
-    {"text": "Anxiety is real but I'm managing it better with the tools from therapy.", "emotion": "anxiety", "sentiment": "positive", "risk": "low"},
-    {"text": "Stressed about money but I made a budget today which helped me feel more in control.", "emotion": "stress", "sentiment": "neutral", "risk": "low"},
-    {"text": "Relationship issues causing a lot of emotional turbulence. Working through it in couples therapy.", "emotion": "stress", "sentiment": "neutral", "risk": "low"},
-    {"text": "Grieving my dog who passed away. The sadness comes in waves but it's okay to mourn.", "emotion": "depression", "sentiment": "neutral", "risk": "low"},
-    {"text": "Feeling nervous about a medical test result. Trying to stay grounded and not catastrophize.", "emotion": "anxiety", "sentiment": "neutral", "risk": "low"},
-    {"text": "Had a breakdown at work. Cried in the bathroom. But asked for help afterward.", "emotion": "depression", "sentiment": "neutral", "risk": "medium"},
-    {"text": "Celebrated six months without a panic attack today. Still anxious but much more in control.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
-    {"text": "Setback in my recovery this week. Trying not to see it as failure but as information.", "emotion": "hopeful", "sentiment": "neutral", "risk": "medium"},
-    {"text": "My therapist said I've made real progress. Hard to see it from inside but I believe her.", "emotion": "hopeful", "sentiment": "positive", "risk": "low"},
+# ─────────────────────────────────────────────────────────────────────────────
+# 1.  BUILT-IN SYNTHETIC DATASET  (fallback when Kaggle files are absent)
+# ─────────────────────────────────────────────────────────────────────────────
+SYNTHETIC = [
+    # ANXIETY
+    {"text":"I can't stop worrying, my heart races all the time",          "emotion":"anxiety",    "sentiment":"negative","risk":"medium"},
+    {"text":"The panic attacks are getting worse, I can't breathe",        "emotion":"anxiety",    "sentiment":"negative","risk":"high"},
+    {"text":"I keep checking locks over and over, I know it's irrational", "emotion":"anxiety",    "sentiment":"negative","risk":"medium"},
+    {"text":"Social situations terrify me, I rehearse for hours",          "emotion":"anxiety",    "sentiment":"negative","risk":"medium"},
+    {"text":"Constant what-ifs are exhausting, always preparing for disaster","emotion":"anxiety", "sentiment":"negative","risk":"medium"},
+    {"text":"I feel a knot in my stomach every morning before work",       "emotion":"anxiety",    "sentiment":"negative","risk":"medium"},
+    {"text":"My mind races at night, can't sleep because of anxiety",      "emotion":"anxiety",    "sentiment":"negative","risk":"medium"},
+    {"text":"Scared to leave the house, fear becomes overwhelming",        "emotion":"anxiety",    "sentiment":"negative","risk":"high"},
+    {"text":"Had a small panic moment but breathing exercises helped",     "emotion":"anxiety",    "sentiment":"neutral", "risk":"low"},
+    {"text":"Worried about tomorrow but I've prepared well",               "emotion":"anxiety",    "sentiment":"neutral", "risk":"low"},
+    # DEPRESSION
+    {"text":"I haven't gotten out of bed in three days, everything feels pointless","emotion":"depression","sentiment":"negative","risk":"high"},
+    {"text":"I used to love painting, now I feel nothing when I look at my brushes","emotion":"depression","sentiment":"negative","risk":"high"},
+    {"text":"I feel like a burden to everyone, they'd be better off without me",    "emotion":"depression","sentiment":"negative","risk":"high"},
+    {"text":"Crying for no reason again, tears won't stop",                "emotion":"depression", "sentiment":"negative","risk":"medium"},
+    {"text":"I feel completely empty inside, hollow, like nobody home",    "emotion":"depression", "sentiment":"negative","risk":"high"},
+    {"text":"Getting out of bed takes every ounce of energy I have",       "emotion":"depression", "sentiment":"negative","risk":"medium"},
+    {"text":"Canceling plans again, easier than pretending to be okay",    "emotion":"depression", "sentiment":"negative","risk":"medium"},
+    {"text":"The future looks completely dark, nothing will ever improve", "emotion":"depression", "sentiment":"negative","risk":"high"},
+    {"text":"I've been thinking everyone would be better off without me",  "emotion":"depression", "sentiment":"negative","risk":"high"},
+    {"text":"Had a rough week but journaling helped me process things",    "emotion":"depression", "sentiment":"neutral", "risk":"low"},
+    {"text":"Feeling down but I know these moods pass, called my therapist","emotion":"depression","sentiment":"neutral", "risk":"low"},
+    # STRESS
+    {"text":"Work deadlines are crushing me, 14 hour days and still behind","emotion":"stress",    "sentiment":"negative","risk":"medium"},
+    {"text":"Juggling school work and family, failing at all three",       "emotion":"stress",     "sentiment":"negative","risk":"medium"},
+    {"text":"Head is constantly pounding, stress giving me daily migraines","emotion":"stress",   "sentiment":"negative","risk":"medium"},
+    {"text":"I've been snapping at my family because of work stress",      "emotion":"stress",     "sentiment":"negative","risk":"medium"},
+    {"text":"Even on weekends I can't switch off, Monday always looming",  "emotion":"stress",     "sentiment":"negative","risk":"medium"},
+    {"text":"Deadlines tight but team is supportive, managing well",       "emotion":"stress",     "sentiment":"neutral", "risk":"low"},
+    {"text":"Stressful day but a workout helped, learning better coping",  "emotion":"stress",     "sentiment":"neutral", "risk":"low"},
+    {"text":"Work is busy but proud of what we accomplished this quarter",  "emotion":"stress",     "sentiment":"positive","risk":"low"},
+    # HOPEFUL
+    {"text":"Started therapy and already seeing improvements, learning to challenge negative thoughts","emotion":"hopeful","sentiment":"positive","risk":"low"},
+    {"text":"Today was a good day, went for a walk and felt present",      "emotion":"hopeful",    "sentiment":"positive","risk":"low"},
+    {"text":"Recovery isn't linear but I'm making progress, six months ago I couldn't write this","emotion":"hopeful","sentiment":"positive","risk":"low"},
+    {"text":"Meditation has changed my relationship with anxiety, more grounded now","emotion":"hopeful","sentiment":"positive","risk":"low"},
+    {"text":"Learning it's okay to ask for help, opened up to a colleague and felt lighter","emotion":"hopeful","sentiment":"positive","risk":"low"},
+    {"text":"After months of struggling finally had a week feeling like myself","emotion":"hopeful","sentiment":"positive","risk":"low"},
+    {"text":"Celebrated six months without a panic attack today",          "emotion":"hopeful",    "sentiment":"positive","risk":"low"},
+    # CALM
+    {"text":"Feeling balanced today, sleep was good, ate well, took breaks","emotion":"calm",      "sentiment":"positive","risk":"low"},
+    {"text":"Mindfulness is becoming second nature, more centered than in years","emotion":"calm", "sentiment":"positive","risk":"low"},
+    {"text":"Nothing major happening emotionally, just steady and present","emotion":"calm",       "sentiment":"neutral", "risk":"low"},
+    {"text":"Had a peaceful morning, coffee reading gentle music",         "emotion":"calm",       "sentiment":"positive","risk":"low"},
+    {"text":"Everything feels manageable, clear head good sleep",          "emotion":"calm",       "sentiment":"positive","risk":"low"},
+    # ANGER
+    {"text":"I'm furious and don't know what to do with this rage",        "emotion":"anger",      "sentiment":"negative","risk":"medium"},
+    {"text":"Snapped at my partner over something trivial, scared me",     "emotion":"anger",      "sentiment":"negative","risk":"medium"},
+    {"text":"Burning resentment won't go away, poisoning everything",      "emotion":"anger",      "sentiment":"negative","risk":"medium"},
+    {"text":"Had an argument but talked it through constructively",        "emotion":"anger",      "sentiment":"neutral", "risk":"low"},
+    # LONELINESS
+    {"text":"Surrounded by people but completely alone, no one really sees me","emotion":"loneliness","sentiment":"negative","risk":"high"},
+    {"text":"Weeks since anyone checked in on me, silence is deafening",   "emotion":"loneliness", "sentiment":"negative","risk":"high"},
+    {"text":"Moved to a new city, don't know anyone, isolation is crushing","emotion":"loneliness","sentiment":"negative","risk":"medium"},
+    {"text":"Reached out to an old friend today, small connection helped enormously","emotion":"loneliness","sentiment":"positive","risk":"low"},
+    # CRISIS
+    {"text":"I don't see a point in continuing, the pain is too much",     "emotion":"depression", "sentiment":"negative","risk":"high"},
+    {"text":"Been researching ways to hurt myself, don't know what's stopping me","emotion":"depression","sentiment":"negative","risk":"high"},
+    {"text":"Wrote a goodbye note, deleted it, scared of my own thoughts", "emotion":"depression", "sentiment":"negative","risk":"high"},
 ]
 
-# ── 2. AUGMENT DATA (simple augmentation for richer training) ─────────────
-def augment_text(text):
-    """Simple word-level augmentation."""
-    synonyms = {
-        "terrible": "awful", "exhausted": "drained", "scared": "frightened",
-        "angry": "furious", "sad": "sorrowful", "happy": "joyful",
-        "worried": "anxious", "tired": "fatigued", "hopeful": "optimistic",
-        "calm": "peaceful", "lonely": "isolated", "help": "support"
-    }
-    words = text.split()
-    augmented = []
-    for w in words:
-        w_lower = w.lower().rstrip('.,!?')
-        if w_lower in synonyms and np.random.random() > 0.6:
-            augmented.append(synonyms[w_lower])
-        else:
-            augmented.append(w)
-    return " ".join(augmented)
+# ─────────────────────────────────────────────────────────────────────────────
+# 2.  EMOTION LABEL MAP  (Kaggle tweet_emotions → our 7 categories)
+# ─────────────────────────────────────────────────────────────────────────────
+EMOTION_MAP = {
+    # Kaggle label       → our label
+    "worry"             : "anxiety",
+    "fear"              : "anxiety",
+    "anger"             : "anger",
+    "sadness"           : "depression",
+    "love"              : "hopeful",
+    "happiness"         : "hopeful",
+    "fun"               : "hopeful",
+    "enthusiasm"        : "hopeful",
+    "relief"            : "calm",
+    "neutral"           : "calm",
+    "boredom"           : "depression",
+    "hate"              : "anger",
+    "empty"             : "loneliness",
+    "lonely"            : "loneliness",
+    "surprise"          : "calm",
+    "joy"               : "hopeful",
+    "disgust"           : "anger",
+}
 
-augmented_data = []
-for item in DATASET:
-    augmented_data.append(item)
-    # Add 2 augmented versions per sample
-    for _ in range(2):
-        aug_item = item.copy()
-        aug_item["text"] = augment_text(item["text"])
-        augmented_data.append(aug_item)
-
-df = pd.DataFrame(augmented_data)
-print(f"Dataset size: {len(df)} samples")
-print(f"Emotion distribution:\n{df['emotion'].value_counts()}\n")
-
-# ── 3. PREPROCESSING ─────────────────────────────────────────────────────
-def preprocess(text):
+# ─────────────────────────────────────────────────────────────────────────────
+# 3.  PREPROCESSING
+# ─────────────────────────────────────────────────────────────────────────────
+def preprocess(text: str) -> str:
+    if not isinstance(text, str):
+        return ""
     text = text.lower()
-    text = re.sub(r"http\S+|www\S+", "", text)
-    text = re.sub(r"[^a-z\s']", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"http\S+|www\S+|@\w+|#\w+", " ", text)   # URLs, mentions, hashtags
+    text = re.sub(r"[^a-z\s']",                " ", text)   # keep only letters + apostrophe
+    text = re.sub(r"\s+",                      " ", text).strip()
     return text
 
-df["clean_text"] = df["text"].apply(preprocess)
-
-# ── 4. ENCODE LABELS ──────────────────────────────────────────────────────
-le_emotion   = LabelEncoder()
-le_sentiment = LabelEncoder()
-le_risk      = LabelEncoder()
-
-df["emotion_enc"]   = le_emotion.fit_transform(df["emotion"])
-df["sentiment_enc"] = le_sentiment.fit_transform(df["sentiment"])
-df["risk_enc"]      = le_risk.fit_transform(df["risk"])
-
-# ── 5. TF-IDF VECTORIZER ──────────────────────────────────────────────────
-vectorizer = TfidfVectorizer(
-    max_features=5000,
-    ngram_range=(1, 3),
-    sublinear_tf=True,
-    min_df=1,
-    analyzer="word"
-)
-
-X = vectorizer.fit_transform(df["clean_text"])
-
-# ── 6. TRAIN MODELS ───────────────────────────────────────────────────────
-def train_and_report(X, y, label_encoder, name):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-    clf = LogisticRegression(max_iter=500, C=1.0, class_weight="balanced", random_state=42)
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
-    labels = label_encoder.classes_
-    print(f"\n{'='*50}")
-    print(f"  {name} Model Report")
-    print(f"{'='*50}")
-    print(classification_report(y_test, y_pred, target_names=labels, zero_division=0))
-    return clf
-
-emotion_clf   = train_and_report(X, df["emotion_enc"],   le_emotion,   "Emotion")
-sentiment_clf = train_and_report(X, df["sentiment_enc"], le_sentiment, "Sentiment")
-risk_clf      = train_and_report(X, df["risk_enc"],      le_risk,      "Risk Level")
-
-# ── 7. SAVE MODELS ────────────────────────────────────────────────────────
-save_dir = os.path.dirname(os.path.abspath(__file__))
-
-joblib.dump(vectorizer,    os.path.join(save_dir, "tfidf_vectorizer.pkl"))
-joblib.dump(emotion_clf,   os.path.join(save_dir, "emotion_classifier.pkl"))
-joblib.dump(sentiment_clf, os.path.join(save_dir, "sentiment_classifier.pkl"))
-joblib.dump(risk_clf,      os.path.join(save_dir, "risk_classifier.pkl"))
-joblib.dump({
-    "emotion":   le_emotion,
-    "sentiment": le_sentiment,
-    "risk":      le_risk
-}, os.path.join(save_dir, "label_encoders.pkl"))
-
-# Save class info
-meta = {
-    "emotions":   list(le_emotion.classes_),
-    "sentiments": list(le_sentiment.classes_),
-    "risk_levels":list(le_risk.classes_),
-    "dataset_size": len(df)
+# ─────────────────────────────────────────────────────────────────────────────
+# 4.  DATA AUGMENTATION  (synonym swap)
+# ─────────────────────────────────────────────────────────────────────────────
+SYNONYMS = {
+    "terrible":"awful","exhausted":"drained","scared":"frightened","angry":"furious",
+    "sad":"sorrowful","happy":"joyful","worried":"anxious","tired":"fatigued",
+    "hopeful":"optimistic","calm":"peaceful","lonely":"isolated","help":"support",
+    "bad":"poor","good":"great","difficult":"hard","afraid":"scared",
 }
-with open(os.path.join(save_dir, "model_meta.json"), "w") as f:
-    json.dump(meta, f, indent=2)
 
-print("\n✅ All models saved successfully!")
-print(f"   Emotions: {meta['emotions']}")
-print(f"   Sentiments: {meta['sentiments']}")
-print(f"   Risk levels: {meta['risk_levels']}")
+def augment(text: str, n: int = 2) -> list:
+    results = [text]
+    words   = text.split()
+    for _ in range(n):
+        aug = [SYNONYMS.get(w.lower().rstrip(".,!?"), w) for w in words]
+        results.append(" ".join(aug))
+    return results
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5.  LOAD KAGGLE DATASETS  (graceful fallback if files missing)
+# ─────────────────────────────────────────────────────────────────────────────
+def load_emotion_dataset() -> pd.DataFrame:
+    """Load Kaggle 'Emotion Detection from Text' dataset."""
+    path = os.path.join(DATA_DIR, "tweet_emotions.csv")
+    if not os.path.exists(path):
+        print("  ℹ  tweet_emotions.csv not found — using synthetic data")
+        return pd.DataFrame()
+    try:
+        df = pd.read_csv(path)
+        # Columns: tweet_id, sentiment, content
+        df = df[["sentiment", "content"]].dropna()
+        df.columns = ["raw_emotion", "text"]
+        df["emotion"] = df["raw_emotion"].str.lower().map(EMOTION_MAP)
+        df = df.dropna(subset=["emotion"])
+        df = df[df["emotion"].isin(["anxiety","depression","stress","hopeful","calm","anger","loneliness"])]
+        # Balance: max 800 per class
+        df = df.groupby("emotion").apply(lambda x: x.sample(min(len(x), 800), random_state=42)).reset_index(drop=True)
+        print(f"  ✅ Loaded {len(df)} rows from tweet_emotions.csv")
+        print(f"     Distribution: {df['emotion'].value_counts().to_dict()}")
+        return df[["text","emotion"]]
+    except Exception as e:
+        print(f"  ⚠  Could not load tweet_emotions.csv: {e}")
+        return pd.DataFrame()
+
+def load_sentiment_dataset() -> pd.DataFrame:
+    """Load Kaggle Sentiment140 dataset."""
+    path = os.path.join(DATA_DIR, "sentiment140.csv")
+    if not os.path.exists(path):
+        print("  ℹ  sentiment140.csv not found — using synthetic data")
+        return pd.DataFrame()
+    try:
+        df = pd.read_csv(path, encoding="latin-1", header=None,
+                         names=["target","id","date","flag","user","text"])
+        df = df[["target","text"]].dropna()
+        df["sentiment"] = df["target"].map({0:"negative", 4:"positive"})
+        df = df.dropna(subset=["sentiment"])
+        # Sample 5000 per class
+        df = df.groupby("sentiment").apply(lambda x: x.sample(min(len(x), 5000), random_state=42)).reset_index(drop=True)
+        print(f"  ✅ Loaded {len(df)} rows from sentiment140.csv")
+        return df[["text","sentiment"]]
+    except Exception as e:
+        print(f"  ⚠  Could not load sentiment140.csv: {e}")
+        return pd.DataFrame()
+
+def load_risk_dataset() -> pd.DataFrame:
+    """Load Kaggle Suicide and Depression Detection dataset."""
+    path = os.path.join(DATA_DIR, "suicide_detection.csv")
+    if not os.path.exists(path):
+        print("  ℹ  suicide_detection.csv not found — using synthetic data")
+        return pd.DataFrame()
+    try:
+        df = pd.read_csv(path).dropna()
+        # Columns: text, class  (suicide / non-suicide)
+        df.columns = [c.lower().strip() for c in df.columns]
+        df["risk"] = df["class"].map({"suicide":"high","non-suicide":"low"})
+        df = df.dropna(subset=["risk"])
+        # Balance: 3000 per class
+        df = df.groupby("risk").apply(lambda x: x.sample(min(len(x), 3000), random_state=42)).reset_index(drop=True)
+        print(f"  ✅ Loaded {len(df)} rows from suicide_detection.csv")
+        return df[["text","risk"]]
+    except Exception as e:
+        print(f"  ⚠  Could not load suicide_detection.csv: {e}")
+        return pd.DataFrame()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6.  BUILD TRAINING DATAFRAMES
+# ─────────────────────────────────────────────────────────────────────────────
+def build_emotion_df() -> pd.DataFrame:
+    kaggle = load_emotion_dataset()
+    # Always include synthetic (manually crafted, clinically grounded)
+    synth_rows = [{"text": t, "emotion": r["emotion"]}
+                  for r in SYNTHETIC
+                  for t in augment(r["text"])]
+    synth_df = pd.DataFrame(synth_rows)
+    if kaggle.empty:
+        df = synth_df
+    else:
+        df = pd.concat([kaggle, synth_df], ignore_index=True)
+    df["text"] = df["text"].apply(preprocess)
+    df = df[df["text"].str.len() > 5].drop_duplicates("text")
+    print(f"  Emotion training size: {len(df)}")
+    return df
+
+def build_sentiment_df() -> pd.DataFrame:
+    kaggle = load_sentiment_dataset()
+    synth_rows = [{"text": t, "sentiment": r["sentiment"]}
+                  for r in SYNTHETIC
+                  for t in augment(r["text"])]
+    synth_df = pd.DataFrame(synth_rows)
+    if kaggle.empty:
+        df = synth_df
+    else:
+        df = pd.concat([kaggle, synth_df], ignore_index=True)
+    df["text"] = df["text"].apply(preprocess)
+    df = df[df["text"].str.len() > 5].drop_duplicates("text")
+    # Add "neutral" class from synthetic
+    neutral = pd.DataFrame([
+        {"text": preprocess(r["text"]), "sentiment": "neutral"}
+        for r in SYNTHETIC if r["sentiment"] == "neutral"
+    ])
+    df = pd.concat([df, neutral], ignore_index=True)
+    print(f"  Sentiment training size: {len(df)}")
+    return df
+
+def build_risk_df() -> pd.DataFrame:
+    kaggle = load_risk_dataset()
+    synth_rows = []
+    for r in SYNTHETIC:
+        for t in augment(r["text"]):
+            synth_rows.append({"text": t, "risk": r["risk"]})
+    synth_df = pd.DataFrame(synth_rows)
+    if kaggle.empty:
+        df = synth_df
+    else:
+        # Kaggle only has high/low — add medium from synthetic
+        medium = synth_df[synth_df["risk"] == "medium"]
+        df     = pd.concat([kaggle, synth_df, medium], ignore_index=True)
+    df["text"] = df["text"].apply(preprocess)
+    df = df[df["text"].str.len() > 5].drop_duplicates("text")
+    print(f"  Risk training size: {len(df)}")
+    return df
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7.  TRAIN ONE CLASSIFIER
+# ─────────────────────────────────────────────────────────────────────────────
+def train_classifier(df: pd.DataFrame, text_col: str, label_col: str,
+                     name: str, label_encoder: LabelEncoder):
+    print(f"\n{'─'*55}")
+    print(f"  Training: {name}")
+    print(f"{'─'*55}")
+
+    X_text = df[text_col].values
+    le     = label_encoder
+    y      = le.fit_transform(df[label_col].values)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_text, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    pipeline = Pipeline([
+        ("tfidf", TfidfVectorizer(
+            max_features = 8000,
+            ngram_range  = (1, 3),
+            sublinear_tf = True,
+            min_df       = 1,
+            analyzer     = "word",
+        )),
+        ("clf", LogisticRegression(
+            max_iter     = 1000,
+            C            = 1.5,
+            class_weight = "balanced",
+            solver       = "lbfgs",
+            random_state = 42,
+        )),
+    ])
+
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
+
+    acc    = accuracy_score(y_test, y_pred)
+    labels = le.classes_
+    print(f"\n  Test Accuracy: {acc*100:.1f}%\n")
+    print(classification_report(y_test, y_pred,
+                                 target_names=labels,
+                                 zero_division=0))
+
+    # 3-fold CV score
+    cv = cross_val_score(pipeline, X_text, y, cv=3, scoring="accuracy")
+    print(f"  3-Fold CV Accuracy: {cv.mean()*100:.1f}% ± {cv.std()*100:.1f}%")
+
+    return pipeline, acc
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8.  MAIN
+# ─────────────────────────────────────────────────────────────────────────────
+def main():
+    print("\n" + "="*55)
+    print("  MindWave NLP Model Trainer v2  (Kaggle Edition)")
+    print("="*55)
+
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR,  exist_ok=True)
+
+    # Label encoders
+    le_emotion   = LabelEncoder()
+    le_sentiment = LabelEncoder()
+    le_risk      = LabelEncoder()
+
+    # ── Emotion ──────────────────────────────────────────────
+    print("\n📊 Building emotion dataset...")
+    df_e = build_emotion_df()
+    clf_emotion, acc_e = train_classifier(
+        df_e, "text", "emotion", "Emotion Classifier", le_emotion)
+
+    # ── Sentiment ────────────────────────────────────────────
+    print("\n📊 Building sentiment dataset...")
+    df_s = build_sentiment_df()
+    clf_sentiment, acc_s = train_classifier(
+        df_s, "text", "sentiment", "Sentiment Analyser", le_sentiment)
+
+    # ── Risk ─────────────────────────────────────────────────
+    print("\n📊 Building risk dataset...")
+    df_r = build_risk_df()
+    clf_risk, acc_r = train_classifier(
+        df_r, "text", "risk", "Risk Level Predictor", le_risk)
+
+    # ── Save ─────────────────────────────────────────────────
+    print("\n💾 Saving models...")
+    joblib.dump(clf_emotion,    os.path.join(MODEL_DIR, "emotion_classifier.pkl"))
+    joblib.dump(clf_sentiment,  os.path.join(MODEL_DIR, "sentiment_classifier.pkl"))
+    joblib.dump(clf_risk,       os.path.join(MODEL_DIR, "risk_classifier.pkl"))
+    joblib.dump({
+        "emotion"  : le_emotion,
+        "sentiment": le_sentiment,
+        "risk"     : le_risk,
+    }, os.path.join(MODEL_DIR, "label_encoders.pkl"))
+
+    meta = {
+        "version"        : "2.0",
+        "emotions"       : list(le_emotion.classes_),
+        "sentiments"     : list(le_sentiment.classes_),
+        "risk_levels"    : list(le_risk.classes_),
+        "emotion_acc"    : round(acc_e, 4),
+        "sentiment_acc"  : round(acc_s, 4),
+        "risk_acc"       : round(acc_r, 4),
+        "emotion_samples": len(df_e),
+        "sentiment_samples": len(df_s),
+        "risk_samples"   : len(df_r),
+        "uses_kaggle"    : {
+            "tweet_emotions"    : os.path.exists(os.path.join(DATA_DIR, "tweet_emotions.csv")),
+            "sentiment140"      : os.path.exists(os.path.join(DATA_DIR, "sentiment140.csv")),
+            "suicide_detection" : os.path.exists(os.path.join(DATA_DIR, "suicide_detection.csv")),
+        }
+    }
+    with open(os.path.join(MODEL_DIR, "model_meta.json"), "w") as f:
+        json.dump(meta, f, indent=2)
+
+    print("\n" + "="*55)
+    print(f"  ✅  ALL MODELS SAVED TO model/")
+    print(f"  Emotion    accuracy : {acc_e*100:.1f}%")
+    print(f"  Sentiment  accuracy : {acc_s*100:.1f}%")
+    print(f"  Risk       accuracy : {acc_r*100:.1f}%")
+    print("="*55 + "\n")
+
+
+if __name__ == "__main__":
+    main()

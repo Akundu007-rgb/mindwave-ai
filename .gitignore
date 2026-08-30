@@ -1,44 +1,72 @@
-# === DATABASE — never upload user data ===
-instance/
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables / Secrets
+.env
+.env.*
+!.env.example
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Testing / Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Build / Distribution
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# SQLite Database
 *.db
 *.sqlite
 *.sqlite3
 
-# === TRAINED MODELS — large binary files ===
-# (keep train_model.py so others can retrain)
+# ML / Generated Files
+*.joblib
+*.pkl
+*.pickle
+
+# Flask
+instance/
+
+# Temporary Files
+*.tmp
+*.temp
+
+# ===== Project-specific =====
+# Large datasets (train from scratch or download separately)
+data/*.csv
+!data/.gitkeep
+
+# Trained model artifacts (usually large, regenerate instead)
 model/*.pkl
-model/model_meta.json
-
-# === PYTHON ===
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-
-# === VIRTUAL ENVIRONMENT ===
-venv/
-env/
-.venv/
-ENV/
-
-# === IDE / EDITOR ===
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# === FLASK SECRET / ENV ===
-.env
-.flaskenv
-config.py
-
-# === LOGS ===
-*.log
-logs/
-
-# === OS JUNK ===
-desktop.ini
-.Spotlight-V100
+model/*.joblib
+model/*.h5
+model/*.pt
+model/*.bin
+model/*.pkl
+instance/
+data/*.csv

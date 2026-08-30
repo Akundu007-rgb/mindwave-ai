@@ -24,11 +24,10 @@
     {% if user %}
     <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a></li>
     <li><a href="{{ url_for('journal') }}" class="{% if request.endpoint == 'journal' %}active{% endif %}">Journal</a></li>
-    <li><a href="{{ url_for('checkin') }}" class="{% if request.endpoint == 'checkin' %}active{% endif %}">Check-in</a></li>
     <li><a href="{{ url_for('assessment') }}" class="{% if request.endpoint == 'assessment' %}active{% endif %}">Assessment</a></li>
+    <li><a href="{{ url_for('checkin') }}" class="{% if request.endpoint == 'checkin' %}active{% endif %}">Check-in</a></li>
     <li><a href="{{ url_for('history') }}" class="{% if request.endpoint == 'history' %}active{% endif %}">History</a></li>
     {% endif %}
-    <li><a href="{{ url_for('comparison') }}" class="{% if request.endpoint == 'comparison' %}active{% endif %}">Compare</a></li>
     <li><a href="{{ url_for('about') }}" class="{% if request.endpoint == 'about' %}active{% endif %}">About</a></li>
   </ul>
   <div class="nav-right">
@@ -63,6 +62,7 @@
         {% if user %}
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('journal') }}">Journal</a>
+        <a href="{{ url_for('assessment') }}">Assessment</a>
         {% endif %}
       </div>
       <div class="fl-col">
@@ -79,7 +79,6 @@
   </div>
   <div class="footer-bottom">
     <span>© 2026 MindWave AI. All rights reserved.</span>
-    <span>IdeaJam 2026 — Problem Statement #16</span>
   </div>
 </footer>
 

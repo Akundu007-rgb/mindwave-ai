@@ -37,7 +37,7 @@
 
         <!-- Questions -->
         {% for q in questions %}
-        {% set q_index = loop.index %}
+        {% set outer_loop = loop %}
         <div class="q-card {% if loop.index == 1 %}active{% endif %}" id="qcard-{{ loop.index }}" data-qnum="{{ loop.index }}">
           <div class="q-number">Question {{ loop.index }} / {{ questions|length }}
             <span class="q-category">{{ q.category }}</span>
@@ -48,7 +48,7 @@
             <label class="q-opt-label" for="q{{ q.id }}_{{ loop.index0 }}">
               <input type="radio" id="q{{ q.id }}_{{ loop.index0 }}"
                      name="q{{ q.id }}" value="{{ opt.score }}"
-                     onchange="optionSelected({{ q_index }})"/>
+                     onchange="optionSelected({{ outer_loop.index }})"/>
               <span class="q-opt-box">
                 <span class="q-opt-radio"></span>
                 <span class="q-opt-text">{{ opt.label }}</span>
