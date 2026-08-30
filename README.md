@@ -431,7 +431,6 @@ This project is licensed under the **MIT License**.
 
 **MindWave — Turning words into wellness.**
 
-*Built with ❤️ for IdeaJam 2026 · Problem Statement #16 · AI / HealthTech*
 
 </div>
-ENDOFREADME
+
